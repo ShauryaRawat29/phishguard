@@ -1,0 +1,15 @@
+# PhishGuard — Development Dependencies
+# Install with: pip install -r requirements-dev.txt
+# (Install requirements.txt first)
+
+# ─── Testing ──────────────────────────────────────────────
+pytest==8.4.1
+pytest-asyncio==1.0.0
+httpx==0.28.1
+
+# ─── Notebook ─────────────────────────────────────────────
+jupyter==1.1.1
+ipykernel==6.29.5
+
+# ─── Code Quality ─────────────────────────────────────────
+ruff==0.12.4
