@@ -44,6 +44,8 @@ FEATURE_LABELS: dict[str, str] = {
     "domain_hyphen_count":      "Hyphens in domain name",
     "path_token_count":         "Number of path segments",
     "num_special_chars":        "Special characters in URL",
+    "is_brand_spoofed":         "Spoofed brand name detected in domain",
+    "is_whitelisted_domain":    "Known trusted legitimate domain",
 }
 
 

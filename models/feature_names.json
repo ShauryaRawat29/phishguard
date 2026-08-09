@@ -23,5 +23,7 @@
   "url_entropy",
   "domain_hyphen_count",
   "path_token_count",
-  "num_special_chars"
+  "num_special_chars",
+  "is_brand_spoofed",
+  "is_whitelisted_domain"
 ]

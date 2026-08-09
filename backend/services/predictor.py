@@ -146,6 +146,15 @@ class PhishGuardPredictor:
 
         # Class 1 = phishing probability
         phishing_proba = float(proba[1])
+
+        # Domain reputation overrides for extreme deterministic signals
+        if feature_dict.get("is_whitelisted_domain") == 1 and feature_dict.get("is_brand_spoofed") == 0:
+            # Trusted apex domain (e.g. google.com, paypal.com, github.com)
+            phishing_proba = min(phishing_proba, 0.05)
+        elif feature_dict.get("is_brand_spoofed") == 1:
+            # Brand spoofing attempt (e.g. paypal.ab, paypal-security.xyz)
+            phishing_proba = max(phishing_proba, 0.95)
+
         prediction = "PHISHING" if phishing_proba >= 0.5 else "LEGITIMATE"
         risk_level = _get_risk_level(phishing_proba)
 

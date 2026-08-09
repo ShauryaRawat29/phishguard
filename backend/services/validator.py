@@ -56,6 +56,17 @@ def validate_url(url: str) -> str:
             message="Please enter a URL.",
         )
 
+    # Reject unsafe URI protocols
+    if url.lower().startswith(("file://", "data:", "javascript:", "vbscript:")):
+        raise URLValidationError(
+            code="INVALID_SCHEME",
+            message="Unsafe URI scheme. Only http, https, and ftp URLs are allowed.",
+        )
+
+    # Auto-prepend https:// if user entered domain/path without scheme
+    if not url.startswith(("http://", "https://", "ftp://")):
+        url = "https://" + url
+
     if len(url) > MAX_URL_LENGTH:
         raise URLValidationError(
             code="URL_TOO_LONG",
@@ -73,21 +84,12 @@ def validate_url(url: str) -> str:
             message="The provided input could not be parsed as a URL.",
         )
 
-    if parsed.scheme.lower() not in ALLOWED_SCHEMES:
-        raise URLValidationError(
-            code="INVALID_SCHEME",
-            message=(
-                f"URL scheme '{parsed.scheme}' is not supported. "
-                "Only http, https, and ftp URLs are accepted."
-            ),
-        )
-
     if not parsed.netloc:
         raise URLValidationError(
             code="INVALID_URL",
             message=(
                 "The URL does not contain a valid domain. "
-                "Example: https://example.com"
+                "Example: example.com or https://example.com"
             ),
         )
 

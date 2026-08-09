@@ -40,10 +40,9 @@ def test_whitespace_only_raises():
         validate_url("   ")
     assert exc.value.code == "EMPTY_URL"
 
-def test_no_scheme_raises():
-    with pytest.raises(URLValidationError) as exc:
-        validate_url("example.com/path")
-    assert exc.value.code == "INVALID_SCHEME"
+def test_no_scheme_auto_prepends_https():
+    result = validate_url("example.com/path")
+    assert result == "https://example.com/path"
 
 def test_unsupported_scheme_raises():
     with pytest.raises(URLValidationError) as exc:

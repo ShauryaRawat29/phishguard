@@ -46,7 +46,30 @@ PHISHING_KEYWORDS: list[str] = [
     "validate", "authorize", "billing",
 ]
 
-# ─── IPv4 address pattern ─────────────────────────────────────────────────────
+# ─── Popular Brand Domains (for brand spoofing / typosquatting detection) ─────
+BRAND_DOMAINS: dict[str, str] = {
+    "paypal": "paypal.com",
+    "google": "google.com",
+    "apple": "apple.com",
+    "amazon": "amazon.com",
+    "facebook": "facebook.com",
+    "microsoft": "microsoft.com",
+    "netflix": "netflix.com",
+    "instagram": "instagram.com",
+    "chase": "chase.com",
+    "wellsfargo": "wellsfargo.com",
+    "binance": "binance.com",
+    "coinbase": "coinbase.com",
+}
+
+# ─── Top Legitimate Apex Domains ──────────────────────────────────────────────
+TOP_LEGITIMATE_DOMAINS: set[str] = {
+    "google.com", "youtube.com", "facebook.com", "amazon.com", "apple.com",
+    "microsoft.com", "wikipedia.org", "github.com", "paypal.com", "twitter.com",
+    "instagram.com", "linkedin.com", "netflix.com", "reddit.com", "yahoo.com",
+    "bing.com", "whatsapp.com", "zoom.us", "chase.com", "wellsfargo.com",
+    "bankofamerica.com", "adobe.com", "wordpress.org", "cloudflare.com",
+}
 _IPV4_RE = re.compile(
     r"^(\d{1,3}\.){3}\d{1,3}$"
 )
@@ -94,23 +117,25 @@ class FeatureExtractor:
         "domain_hyphen_count",
         "path_token_count",
         "num_special_chars",
+        "is_brand_spoofed",
+        "is_whitelisted_domain",
     ]
 
     def extract(self, url: str) -> dict[str, int | float]:
         """
-        Extract all 25 features from the given URL string.
+        Extract all 27 features from the given URL string.
 
         Args:
-            url: A raw URL string (e.g. "https://example.com/login").
+            url: A raw URL string (e.g. "example.com" or "https://example.com/login").
 
         Returns:
             A dict mapping feature name → numeric value (int or float).
-
-        Raises:
-            ValueError: If the URL cannot be parsed.
         """
-        parsed = urlparse(url)
-        full_url = url
+        full_url = url.strip()
+        if not full_url.startswith(("http://", "https://", "ftp://")):
+            full_url = "https://" + full_url
+
+        parsed = urlparse(full_url)
         scheme = parsed.scheme.lower()
         netloc = parsed.netloc.lower()      # includes port if present
         path = parsed.path
@@ -161,6 +186,8 @@ class FeatureExtractor:
             # ── Path features ──────────────────────────────────────────────
             "path_token_count":       self._path_token_count(path),
             "num_special_chars":      self._count_special_chars(full_url),
+            "is_brand_spoofed":       int(self._is_brand_spoofed(host)),
+            "is_whitelisted_domain":  int(self._is_whitelisted_domain(host)),
         }
 
     def extract_as_list(self, url: str) -> list[int | float]:
@@ -264,3 +291,31 @@ class FeatureExtractor:
         """
         special = set("!$&'()*+,;=")
         return sum(c in special for c in url)
+
+    @staticmethod
+    def _is_brand_spoofed(host: str) -> bool:
+        """
+        Detect typosquatting / brand spoofing in domain.
+
+        Returns True if host contains a famous brand name (e.g. 'paypal')
+        but host does NOT end with the official domain (e.g. 'paypal.com').
+        Example: 'paypal.ab' -> True, 'paypal-secure.net' -> True, 'paypal.com' -> False.
+        """
+        host_lower = host.lower()
+        for brand, official_domain in BRAND_DOMAINS.items():
+            if brand in host_lower:
+                if not (host_lower == official_domain or host_lower.endswith("." + official_domain)):
+                    return True
+        return False
+
+    @staticmethod
+    def _is_whitelisted_domain(host: str) -> bool:
+        """
+        Check if host belongs to top trusted legitimate apex domains.
+        Example: 'google.com' -> True, 'sub.google.com' -> True, 'google.ab' -> False.
+        """
+        host_lower = host.lower()
+        for domain in TOP_LEGITIMATE_DOMAINS:
+            if host_lower == domain or host_lower.endswith("." + domain):
+                return True
+        return False

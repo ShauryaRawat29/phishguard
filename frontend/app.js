@@ -69,9 +69,11 @@ async function handleSubmit(e) {
     return;
   }
 
-  if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('ftp://')) {
-    showInputError('URL must start with http://, https://, or ftp://');
-    return;
+  // Auto-prepend scheme if omitted
+  let formattedUrl = url;
+  if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://') && !formattedUrl.startsWith('ftp://')) {
+    formattedUrl = 'https://' + formattedUrl;
+    input.value = formattedUrl;
   }
 
   hideInputError();

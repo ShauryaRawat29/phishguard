@@ -77,7 +77,12 @@ def main():
     print(f"Feature extraction complete in {duration:.2f}s!")
 
     X = np.array(feature_rows)
-    y = df[label_col].values
+    raw_y = df[label_col].values
+    
+    # In PhiUSIIL dataset: label 0 = Phishing, label 1 = Legitimate.
+    # Convert target so: y = 1 (PHISHING), y = 0 (LEGITIMATE)
+    y = (raw_y == 0).astype(int)
+    print(f"Target distribution: Phishing (1)={np.sum(y==1)}, Legitimate (0)={np.sum(y==0)}")
 
     # Stratified Train (70%) / Validation (15%) / Test (15%)
     X_train, X_temp, y_train, y_temp = train_test_split(
