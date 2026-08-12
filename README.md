@@ -69,7 +69,7 @@ phishguard/
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/YOUR_USERNAME/phishguard.git
+git clone https://github.com/ShauryaRawat29/phishguard.git
 cd phishguard
 ```
 
