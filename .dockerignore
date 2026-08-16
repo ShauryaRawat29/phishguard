@@ -4,9 +4,8 @@ __pycache__/
 .venv/
 venv/
 
-# Data & model artifacts (large)
+# Data (large, gitignored — download separately)
 data/
-models/*.joblib
 
 # Tests, notebooks, docs mirror
 tests/
