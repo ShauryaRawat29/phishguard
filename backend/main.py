@@ -32,6 +32,7 @@ from backend.logging import get_logger, setup_logging
 from backend.models.schemas import HealthResponse
 from backend.rate_limit import limiter
 from backend.routes.analyze import router as analyze_router
+from backend.routes.features import router as features_router
 from backend.services.predictor import PhishGuardPredictor
 
 
@@ -164,6 +165,7 @@ app.add_middleware(
 
 # ─── Routes ───────────────────────────────────────────────────────────────────
 app.include_router(analyze_router, prefix="/api", tags=["Analysis"])
+app.include_router(features_router, prefix="/api", tags=["Features"])
 
 
 @app.get(

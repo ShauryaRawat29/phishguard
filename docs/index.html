@@ -6,6 +6,19 @@
   <title>PhishGuard — AI Phishing URL Detector</title>
   <meta name="description" content="PhishGuard analyzes URLs using machine learning to detect phishing attempts and explain exactly why a URL is suspicious." />
   <meta name="theme-color" content="#0a0f1e" />
+  <meta name="color-scheme" content="dark" />
+
+  <!-- Open Graph / social sharing -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="PhishGuard — AI Phishing URL Detector" />
+  <meta property="og:description" content="Detect phishing URLs before they detect you. Enter any URL and get an ML-powered verdict with an explanation." />
+  <meta property="og:url" content="https://shauryarawat29.github.io/phishguard/" />
+  <meta property="og:image" content="favicon.svg" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="PhishGuard — AI Phishing URL Detector" />
+  <meta name="twitter:description" content="Detect phishing URLs before they detect you. ML-powered URL analysis with explanations." />
+
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -55,7 +68,7 @@
         <span class="gradient-text">Before They Detect You</span>
       </h1>
       <p class="hero-subtitle">
-        Enter any URL below. PhishGuard's machine learning model analyzes 27 structural
+        Enter any URL below. PhishGuard's machine learning model analyzes 33 structural
         and lexical features to classify it as legitimate or phishing — with a full explanation.
       </p>
     </section>
@@ -151,10 +164,21 @@
             </div>
           </div>
 
+          <!-- Verdict Summary -->
+          <p class="verdict-summary" id="verdict-summary" role="status" aria-live="polite"></p>
+
           <!-- Explanation -->
           <div class="explanation-section" id="explanation-section">
             <h2 class="explanation-title">Key Factors</h2>
             <ul class="explanation-list" id="explanation-list" aria-label="Prediction factors"></ul>
+
+            <button class="show-all-btn" id="show-all-btn" type="button" aria-expanded="false" aria-controls="all-features-grid">
+              <span class="show-all-label">Show all features</span>
+              <svg class="show-all-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M6 9l6 6 6-6"/>
+              </svg>
+            </button>
+            <div class="all-features-grid" id="all-features-grid" hidden></div>
           </div>
 
           <!-- Action Buttons -->
@@ -179,6 +203,15 @@
           <button class="action-btn action-btn--primary" id="retry-btn" type="button">Try Again</button>
         </div>
 
+        <!-- ── Recent Scans ──────────────────────────────────── -->
+        <div class="history-section" id="history-section" hidden>
+          <div class="history-header">
+            <h2 class="history-title">Recent Scans</h2>
+            <button class="history-clear" id="history-clear-btn" type="button">Clear history</button>
+          </div>
+          <ul class="history-list" id="history-list"></ul>
+        </div>
+
       </div>
     </section>
 
@@ -196,7 +229,7 @@
           <div class="step-number" aria-hidden="true">02</div>
           <div class="step-icon" aria-hidden="true">⚙️</div>
           <h3 class="step-title">Feature Extraction</h3>
-          <p class="step-desc">27 structural and lexical features are extracted: URL length, subdomain count, suspicious keywords, TLD type, entropy, and more.</p>
+          <p class="step-desc">33 structural and lexical features are extracted: URL length, subdomain count, suspicious keywords, TLD type, entropy, and more.</p>
         </div>
         <div class="step-card">
           <div class="step-number" aria-hidden="true">03</div>

@@ -179,6 +179,19 @@ def test_frontend_served_at_root(client):
     assert "PhishGuard" in resp.text
 
 
+# ─── GET /api/features ───────────────────────────────────────────────────────
+
+
+def test_features_lists_names_and_labels(client):
+    resp = client.get("/api/features")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert len(body["feature_names"]) == 33
+    assert set(body["feature_names"]) == set(body["feature_labels"])
+    assert body["feature_labels"]["url_length"] == "URL length"
+    assert body["feature_labels"]["has_punycode"] == "Internationalized (punycode) domain"
+
+
 # ─── Rate-limit key helpers ──────────────────────────────────────────────────
 
 

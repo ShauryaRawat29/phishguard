@@ -47,19 +47,21 @@ sessions — read it first when picking up a new session.
 
 ## Phase 3 — Frontend Polish
 
-- [ ] 3.1 SHAP bar visualization (pure CSS horizontal bars) for explanation items
-- [ ] 3.2 Plain-language verdict summary sentence
-- [ ] 3.3 WCAG: `:focus-visible`, `prefers-reduced-motion`, contrast, color-blind-safe
-- [ ] 3.4 "Show all features" progressive disclosure + recent-scans history (localStorage)
-- [ ] 3.5 SVG favicon + Open Graph meta tags
-- [ ] 3.6 Micro-interactions (verdict animation, hover tooltips)
-- [ ] 3.7 Sync `docs/` mirror after all frontend changes
+- [x] 3.1 SHAP bar visualization (pure CSS horizontal bars) for explanation items
+- [x] 3.2 Plain-language verdict summary sentence
+- [x] 3.3 WCAG: `:focus-visible`, `prefers-reduced-motion`, contrast, color-blind-safe
+- [x] 3.4 "Show all features" progressive disclosure + recent-scans history (localStorage)
+      — backed by new `GET /api/features` endpoint (feature names + labels)
+- [x] 3.5 SVG favicon + Open Graph meta tags
+- [x] 3.6 Micro-interactions (verdict animation, hover tooltips)
+- [x] 3.7 Sync `docs/` mirror after all frontend changes
 
 ## Phase 4 — Tests, CI, Docs
 
-- [ ] New tests for Phase 1 & 2 features
-- [ ] Coverage ≥ 85-90% (currently 75%; `ml/train.py` untested by design)
-- [ ] `pip-audit` in CI (see 1.6)
+- [x] New tests for Phase 1 & 2 features
+- [x] `pip-audit` in CI (see 1.6)
+- [x] Test for `GET /api/features` endpoint
+- [ ] Coverage ≥ 85-90% (currently ~75%; `ml/train.py` untested by design)
 - [ ] README updates: security headers, docs gating, adversarial eval, new feature count
 
 ## Invariants
