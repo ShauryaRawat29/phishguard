@@ -152,3 +152,33 @@ def test_client_key_honors_proxy_header_when_trusted(monkeypatch):
         headers = {"X-Forwarded-For": "9.9.9.9, 1.2.3.4"}
 
     assert rate_limit._client_key(FakeRequest()) == "9.9.9.9"
+
+
+def test_analyze_limit_string_derived_from_settings():
+    from backend.config import settings
+    from backend.rate_limit import analyze_limit
+
+    assert analyze_limit() == f"{settings.rate_limit_per_minute}/minute"
+
+
+def test_rate_limit_exceeded_returns_429():
+    """A low-limit endpoint must return 429 once the budget is exhausted."""
+    from fastapi import FastAPI, Request
+    from slowapi import Limiter, _rate_limit_exceeded_handler
+    from slowapi.errors import RateLimitExceeded
+    from slowapi.util import get_remote_address
+
+    app = FastAPI()
+    limiter = Limiter(key_func=get_remote_address)
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+    @app.post("/limited")
+    @limiter.limit("2/minute")
+    def limited(request: Request):
+        return {"ok": True}
+
+    with TestClient(app) as c:
+        assert c.post("/limited").status_code == 200
+        assert c.post("/limited").status_code == 200
+        assert c.post("/limited").status_code == 429

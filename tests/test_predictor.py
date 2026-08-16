@@ -141,3 +141,42 @@ def test_risk_level_thresholds():
     assert _get_risk_level(0.70) == "HIGH"
     assert _get_risk_level(0.40) == "MEDIUM"
     assert _get_risk_level(0.10) == "LOW"
+
+
+# ─── Model load failure paths ────────────────────────────────────────────────
+
+
+def test_load_missing_model_file(monkeypatch, tmp_path):
+    from backend import config
+
+    monkeypatch.setattr(config.settings, "model_path", str(tmp_path / "missing.joblib"))
+    monkeypatch.setattr(config.settings, "feature_names_path", str(tmp_path / "none.json"))
+    assert PhishGuardPredictor().is_loaded is False
+
+
+def test_load_rejects_non_estimator(monkeypatch, tmp_path):
+    import joblib
+
+    from backend import config
+
+    model_path = tmp_path / "model.joblib"
+    joblib.dump({"not": "an estimator"}, model_path)
+    monkeypatch.setattr(config.settings, "model_path", str(model_path))
+    monkeypatch.setattr(config.settings, "feature_names_path", str(tmp_path / "none.json"))
+    assert PhishGuardPredictor().is_loaded is False
+
+
+def test_load_rejects_feature_name_mismatch(monkeypatch, tmp_path):
+    import json
+
+    import joblib
+
+    from backend import config
+
+    model_path = tmp_path / "model.joblib"
+    joblib.dump(StubModel(0.5), model_path)
+    feature_names_path = tmp_path / "feature_names.json"
+    feature_names_path.write_text(json.dumps(["wrong", "names"]))
+    monkeypatch.setattr(config.settings, "model_path", str(model_path))
+    monkeypatch.setattr(config.settings, "feature_names_path", str(feature_names_path))
+    assert PhishGuardPredictor().is_loaded is False
