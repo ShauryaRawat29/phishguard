@@ -8,7 +8,7 @@
   --bg-secondary: #0f172a;
   --bg-card: #1e293b;
   --bg-card-hover: #334155;
-  
+
   --border-color: rgba(255, 255, 255, 0.08);
   --border-focus: #38bdf8;
 
@@ -41,7 +41,7 @@
   --radius-md: 12px;
   --radius-lg: 18px;
   --radius-full: 9999px;
-  
+
   --shadow-glow: 0 0 30px rgba(56, 189, 248, 0.12);
   --shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
 }

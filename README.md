@@ -11,7 +11,7 @@
 
 ---
 
-> 🚧 **This project is currently under active development.**  
+> 🚧 **This project is currently under active development.**
 > Documentation will be updated as each phase is completed.
 
 ---

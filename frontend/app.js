@@ -111,13 +111,13 @@ function renderResult(data) {
   verdictLabel.textContent = data.prediction;
   verdictUrl.textContent = data.url;
   verdictIcon.textContent = isPhishing ? '🚨' : '🛡️';
-  
+
   riskBadge.textContent = `${data.risk_level} RISK`;
 
   // Confidence Bar
   confidenceValue.textContent = `${confidencePct}%`;
   confidenceFill.style.width = `${confidencePct}%`;
-  confidenceFill.style.backgroundColor = isPhishing 
+  confidenceFill.style.backgroundColor = isPhishing
     ? (confidencePct > 75 ? 'var(--color-phish)' : 'var(--color-warn)')
     : 'var(--color-legit)';
 
@@ -127,7 +127,7 @@ function renderResult(data) {
     data.explanation.forEach(item => {
       const li = document.createElement('li');
       li.className = 'explanation-item';
-      
+
       const isPushingPhish = item.direction === 'phishing';
       const bulletSymbol = isPushingPhish ? '⚠' : '✓';
       const bulletClass = isPushingPhish ? 'phishing' : 'legitimate';
@@ -137,7 +137,7 @@ function renderResult(data) {
         <div class="exp-content">
           <div class="exp-label">${escapeHtml(item.label)}</div>
           <div class="exp-detail">
-            Value: <code>${escapeHtml(String(item.value))}</code> &bull; 
+            Value: <code>${escapeHtml(String(item.value))}</code> &bull;
             Impact: <strong>${item.impact.toUpperCase()}</strong> (${item.direction})
           </div>
         </div>

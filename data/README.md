@@ -9,7 +9,7 @@ It is **not committed to this repository** due to its size. Follow the steps bel
 ## Option 1: Download from Kaggle (Recommended)
 
 1. Create a free account at [kaggle.com](https://www.kaggle.com) if you don't have one.
-2. Visit the dataset page:  
+2. Visit the dataset page:
    **https://www.kaggle.com/datasets/hemanthd007/phiusiil-phishing-url-dataset**
 3. Click **Download** to get the ZIP file.
 4. Extract the CSV file and place it in this `data/` directory.
