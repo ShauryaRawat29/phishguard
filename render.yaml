@@ -1,0 +1,27 @@
+# PhishGuard — Render Blueprint
+# Deploy the API with: https://render.com/new (choose "Blueprint" and point it
+# at this repo), or use the Render dashboard to create a "Docker" web service
+# using the repository's Dockerfile.
+#
+# No database required — PhishGuard is a stateless, single-service app.
+# The trained model (models/phishing_model.joblib) is committed to the repo so
+# the Docker build context always contains it.
+
+services:
+  - type: web
+    name: phishguard-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: CORS_ORIGINS
+        sync: false # set to your GitHub Pages URL, e.g. https://shauryarawat29.github.io
+      - key: RATE_LIMIT_PER_MINUTE
+        value: 60
+      - key: TRUST_PROXY_HEADERS
+        value: "true"
+      - key: LOG_LEVEL
+        value: INFO

@@ -18,8 +18,8 @@
 
 ## Quick Links
 
-- 🌐 **Live Demo:** *(coming soon — Phase 12)*
-- 📖 **API Docs:** *(coming soon — Phase 9)*
+- 🌐 **Live Demo:** *[Coming soon](https://github.com/ShauryaRawat29/phishguard)*
+- 📖 **API Docs:** Interactive Swagger UI at `/docs` once the API is deployed (locally: `http://localhost:8000/docs`)
 - 📓 **ML Notebook:** `notebooks/phishing_detection.ipynb`
 
 ---
@@ -94,8 +94,8 @@ pip install -r requirements-dev.txt
 ```
 
 ### 4. Obtain the trained model
-The model artifact is not committed. Download the dataset (see
-[data/README.md](data/README.md)) and rebuild it, or retrain directly:
+The production model is committed to the repo at `models/phishing_model.joblib`,
+so no download is needed. If you want to retrain it from scratch:
 
 ```bash
 python scripts/rebuild_model.py    # downloads data if missing, then trains
@@ -128,6 +128,42 @@ python scripts/sync_docs.py  # keep docs/ mirror in sync with frontend/
 
 CI runs lint, format, tests (with coverage), and verifies the `docs/` mirror on
 every push and pull request.
+
+---
+
+## Deployment
+
+PhishGuard ships with free-tier deployment config for both halves of the app:
+
+### API — Render (free)
+
+1. Push this repo to GitHub.
+2. Go to [render.com](https://render.com) → **New** → **Blueprint**, and point it
+   at this repo. Render reads `render.yaml` and creates the `phishguard-api`
+   web service automatically.
+3. Set the `CORS_ORIGINS` environment variable to your GitHub Pages URL
+   (e.g. `https://shauryarawat29.github.io`) in the Render dashboard.
+4. Set `TRUST_PROXY_HEADERS=true` (already the default in `render.yaml`) so rate
+   limiting sees real client IPs behind the proxy.
+
+The service uses the repo's `Dockerfile` and the committed model at
+`models/phishing_model.joblib`. A health check runs against `/api/health`.
+
+> Note: Render's free tier spins the service down after 15 minutes of
+> inactivity; the first request after idle takes ~30-60s to respond (cold
+> start). This is fine for a demo/portfolio project.
+
+### UI — GitHub Pages (free)
+
+1. In your repo: **Settings → Pages → Source: GitHub Actions**.
+2. The `.github/workflows/pages.yml` workflow deploys the `docs/` mirror
+   (synced from `frontend/`) on every push to `main`.
+3. Enable **Pages → Deploy from a branch** as an alternative if you prefer
+   `main` `/docs` instead of the Actions workflow.
+
+The frontend calls the API at the same origin in production, so set the API
+deployment to serve the UI too (FastAPI mounts `frontend/` automatically), or
+point the GitHub Pages `CORS_ORIGINS` at your Pages URL.
 
 ---
 

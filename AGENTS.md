@@ -30,7 +30,8 @@ ml/
   feature_extractor.py  Extracts 27 deterministic URL features
   explainer.py          SHAP TreeExplainer wrapper
   train.py              End-to-end training + model serialization
-models/               Trained artifacts (gitignored; see scripts/rebuild_model.py)
+models/               Trained artifacts (phishing_model.joblib is committed for
+                      deploy; retrain via scripts/rebuild_model.py)
 frontend/             Static UI (index.html, style.css, app.js)
 docs/                 Mirror of frontend/ for GitHub Pages (keep in sync)
 tests/                pytest suite (unit + API integration)

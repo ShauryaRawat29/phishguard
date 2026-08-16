@@ -37,8 +37,9 @@ data/*.json
 !data/README.md
 
 # ─── ML Model Artifacts ───────────────────────────────────
-# Regenerate locally with: python scripts/rebuild_model.py
-models/*.joblib
+# The production model (models/phishing_model.joblib) is committed so that
+# Render, Docker, and CI always have a usable artifact at build time.
+# Retrain/regenerate it locally with: python scripts/rebuild_model.py
 models/*.pkl
 
 # ─── Environment Variables ────────────────────────────────
