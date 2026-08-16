@@ -24,10 +24,13 @@ def _client_key(request: Request) -> str:
 
     When running behind a trusted reverse proxy (e.g. Render), use the
     first X-Forwarded-For hop so all users are keyed individually instead
-    of sharing the proxy IP. Only honor the header when
-    TRUST_PROXY_HEADERS is enabled to avoid client-side header spoofing.
+    of sharing the proxy IP. The header is only honored when
+    TRUST_PROXY_HEADERS is enabled AND the direct peer is one of the
+    configured TRUSTED_PROXY_IPS — otherwise a client could spoof the header
+    to bypass per-IP limits.
     """
-    if settings.trust_proxy_headers:
+    peer_ip = request.client.host if request.client else None
+    if settings.trust_proxy_headers and peer_ip and settings.is_trusted_proxy(peer_ip):
         forwarded = request.headers.get("X-Forwarded-For")
         if forwarded:
             return forwarded.split(",")[0].strip()

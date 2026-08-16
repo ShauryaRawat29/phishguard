@@ -23,5 +23,18 @@ services:
         value: 60
       - key: TRUST_PROXY_HEADERS
         value: "true"
+      # Hardening: interactive docs are disabled in production, and only
+      # trusted proxy IPs may set X-Forwarded-For (per-IP rate limiting).
+      # Set DOCS_ENABLED=true to re-enable the Swagger UI.
+      - key: DOCS_ENABLED
+        value: "false"
+      - key: HSTS_ENABLED
+        value: "true"
+      - key: TRUSTED_HOSTS
+        value: "phishguard-api-dkoj.onrender.com"
+      # Add Render's proxy IP ranges here (comma-separated) to key rate limits
+      # per client IP instead of on Render's shared edge IP.
+      - key: TRUSTED_PROXY_IPS
+        sync: false
       - key: LOG_LEVEL
         value: INFO

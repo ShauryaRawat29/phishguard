@@ -22,6 +22,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.staticfiles import StaticFiles
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -37,6 +38,32 @@ from backend.services.predictor import PhishGuardPredictor
 def _log_level(name: str) -> int:
     """Map a settings log-level string to a logging level."""
     return getattr(logging, name.upper(), logging.INFO)
+
+
+def _build_csp(docs_enabled: bool) -> str:
+    """
+    Build a Content-Security-Policy string.
+
+    The default policy is strict: only self-hosted scripts, Google Fonts, and
+    same-origin API calls. When interactive docs are enabled, the policy is
+    relaxed to allow the Swagger UI / ReDoc CDN assets.
+    """
+    directives = [
+        "default-src 'self'",
+        "script-src 'self'",
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+        "img-src 'self' data:",
+        "font-src 'self' https://fonts.gstatic.com",
+        "connect-src 'self'",
+        "frame-ancestors 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+    ]
+    if docs_enabled:
+        directives[1] += " 'unsafe-inline' https://cdn.jsdelivr.net"
+        directives[2] += " https://cdn.jsdelivr.net"
+        directives[3] += " https://fastapi.tiangolo.com"
+    return "; ".join(directives)
 
 
 setup_logging(level=_log_level(settings.log_level))
@@ -69,13 +96,23 @@ app = FastAPI(
     ),
     version=settings.app_version,
     lifespan=lifespan,
-    docs_url="/docs",
-    redoc_url="/redoc",
+    # Interactive docs are gated: disabled in production to avoid exposing the
+    # API surface to reconnaissance (see Settings.docs_enabled).
+    docs_url="/docs" if settings.docs_enabled else None,
+    redoc_url="/redoc" if settings.docs_enabled else None,
+    openapi_url="/openapi.json" if settings.docs_enabled else None,
 )
 
 # ─── Middleware: Rate Limiting ────────────────────────────────────────────────
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+
+# ─── Middleware: Trusted Hosts ────────────────────────────────────────────────
+app.add_middleware(
+    TrustedHostMiddleware,
+    allowed_hosts=settings.trusted_host_list,
+)
 
 
 # ─── Middleware: Security Headers ─────────────────────────────────────────────
@@ -88,13 +125,38 @@ async def security_headers(request: Request, call_next):
     response.headers["Referrer-Policy"] = "no-referrer"
     response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=(), payment=()"
     response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+    response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
+    response.headers["Content-Security-Policy"] = _build_csp(settings.docs_enabled)
+
+    # HSTS only when the client connection is HTTPS (directly or via a trusted
+    # reverse proxy that forwards X-Forwarded-Proto). Browsers ignore HSTS over
+    # plain HTTP, so honoring the header here cannot cause a downgrade.
+    if settings.hsts_enabled:
+        is_secure = request.url.scheme == "https"
+        if not is_secure and settings.trust_proxy_headers:
+            is_secure = request.headers.get("X-Forwarded-Proto", "").lower() == "https"
+        if is_secure:
+            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+
+    # API responses must never be cached by intermediate proxies.
+    if request.url.path.startswith("/api/"):
+        response.headers["Cache-Control"] = "no-store"
+
     return response
 
 
 # ─── Middleware: CORS ─────────────────────────────────────────────────────────
+_cors_origins = settings.cors_origin_list
+if settings.app_env == "production" and "*" in _cors_origins:
+    logger.warning(
+        "CORS is set to '*' in production. The wildcard is ignored; API calls "
+        "will be same-origin only. Set CORS_ORIGINS to your frontend origin."
+    )
+    _cors_origins = [o for o in _cors_origins if o != "*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origin_list,
+    allow_origins=_cors_origins,
     allow_credentials=False,
     allow_methods=["GET", "POST"],
     allow_headers=["Content-Type", "Accept"],

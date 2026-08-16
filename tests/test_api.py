@@ -115,6 +115,61 @@ def test_security_headers_present(client):
     assert "Cross-Origin-Opener-Policy" in resp.headers
 
 
+def test_extended_security_headers_present(client):
+    resp = client.get("/api/health")
+    assert "Content-Security-Policy" in resp.headers
+    assert "Cross-Origin-Resource-Policy" in resp.headers
+    assert resp.headers["Cross-Origin-Resource-Policy"] == "same-origin"
+    assert resp.headers["Cache-Control"] == "no-store"
+
+
+def test_hsts_emitted_when_secure_proxy(monkeypatch, client):
+    from backend.config import settings
+
+    monkeypatch.setattr(settings, "hsts_enabled", True)
+    monkeypatch.setattr(settings, "trust_proxy_headers", True)
+
+    resp = client.get("/api/health", headers={"X-Forwarded-Proto": "https"})
+    assert resp.headers["Strict-Transport-Security"] == "max-age=31536000; includeSubDomains"
+
+
+def test_hsts_omitted_over_plain_http(monkeypatch, client):
+    from backend.config import settings
+
+    monkeypatch.setattr(settings, "hsts_enabled", True)
+
+    resp = client.get("/api/health")
+    assert "Strict-Transport-Security" not in resp.headers
+
+
+def test_trusted_host_rejects_unknown_host(client):
+    resp = client.get("/api/health", headers={"Host": "evil.example.com"})
+    assert resp.status_code == 400
+
+
+def test_docs_disabled_when_configured_off(monkeypatch):
+    import importlib
+
+    from backend.config import settings
+
+    monkeypatch.setattr(settings, "docs_enabled", False)
+    import backend.main as main
+
+    importlib.reload(main)
+    app = main.app
+    with TestClient(app) as c:
+        assert c.get("/docs").status_code == 404
+        assert c.get("/openapi.json").status_code == 404
+
+    monkeypatch.setattr(settings, "docs_enabled", True)
+    importlib.reload(main)
+
+
+def test_docs_available_by_default(client):
+    resp = client.get("/docs")
+    assert resp.status_code == 200
+
+
 # ─── Static frontend mount ───────────────────────────────────────────────────
 
 
@@ -139,11 +194,12 @@ def test_client_key_without_proxy_header():
     assert _client_key(FakeRequest()) == "1.2.3.4"
 
 
-def test_client_key_honors_proxy_header_when_trusted(monkeypatch):
+def test_client_key_honors_proxy_header_when_peer_trusted(monkeypatch):
     from backend import rate_limit
     from backend.config import settings
 
     monkeypatch.setattr(settings, "trust_proxy_headers", True)
+    monkeypatch.setattr(settings, "trusted_proxy_ips", "1.2.3.4, 10.0.0.0/8")
 
     class FakeRequest:
         class client:
@@ -152,6 +208,22 @@ def test_client_key_honors_proxy_header_when_trusted(monkeypatch):
         headers = {"X-Forwarded-For": "9.9.9.9, 1.2.3.4"}
 
     assert rate_limit._client_key(FakeRequest()) == "9.9.9.9"
+
+
+def test_client_key_ignores_proxy_header_when_peer_untrusted(monkeypatch):
+    from backend import rate_limit
+    from backend.config import settings
+
+    monkeypatch.setattr(settings, "trust_proxy_headers", True)
+    monkeypatch.setattr(settings, "trusted_proxy_ips", "192.0.2.10")
+
+    class FakeRequest:
+        class client:
+            host = "1.2.3.4"
+
+        headers = {"X-Forwarded-For": "9.9.9.9, 1.2.3.4"}
+
+    assert rate_limit._client_key(FakeRequest()) == "1.2.3.4"
 
 
 def test_analyze_limit_string_derived_from_settings():

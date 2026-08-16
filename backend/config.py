@@ -16,6 +16,7 @@ Usage:
 from __future__ import annotations
 
 from functools import lru_cache
+from ipaddress import ip_address, ip_network
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -38,6 +39,18 @@ class Settings(BaseSettings):
     rate_limit_per_minute: int = 60  # max POST /api/analyze calls / min / IP
     trust_proxy_headers: bool = False  # trust X-Forwarded-For (behind Render, set True)
 
+    # ─── Security ────────────────────────────────────────────
+    # Interactive API docs (/docs, /redoc, /openapi.json). Disable in
+    # production to avoid exposing the API surface to reconnaissance.
+    docs_enabled: bool = True
+    # Strict-Transport-Security header (only sent over HTTPS).
+    hsts_enabled: bool = True
+    # Comma-separated IPs / CIDRs allowed to set X-Forwarded-For. XFF from any
+    # other peer is ignored, preventing client-side header spoofing.
+    trusted_proxy_ips: str = ""
+    # Allowed Host headers (TrustedHostMiddleware). Add your deployed hostname.
+    trusted_hosts: str = "localhost,127.0.0.1,0.0.0.0,::1,testserver"
+
     # ─── Model ───────────────────────────────────────────────
     model_path: str = "models/phishing_model.joblib"
     feature_names_path: str = "models/feature_names.json"
@@ -56,6 +69,37 @@ class Settings(BaseSettings):
     def cors_origin_list(self) -> list[str]:
         """CORS origins as a parsed list (comma-separated env value)."""
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+
+    @property
+    def trusted_proxy_ip_list(self) -> list[str]:
+        """Trusted proxy IPs / CIDRs as a parsed list (comma-separated env value)."""
+        return [o.strip() for o in self.trusted_proxy_ips.split(",") if o.strip()]
+
+    @property
+    def trusted_host_list(self) -> list[str]:
+        """Allowed Host headers as a parsed list (comma-separated env value)."""
+        return [h.strip() for h in self.trusted_hosts.split(",") if h.strip()]
+
+    def is_trusted_proxy(self, peer_ip: str | None) -> bool:
+        """
+        Return True if `peer_ip` is one of the configured trusted proxies.
+
+        An empty `trusted_proxy_ips` means no proxies are trusted, so the
+        `X-Forwarded-For` header must not be honored.
+        """
+        if not peer_ip:
+            return False
+        try:
+            addr = ip_address(peer_ip)
+        except ValueError:
+            return False
+        for entry in self.trusted_proxy_ip_list:
+            try:
+                if addr in ip_network(entry, strict=False):
+                    return True
+            except ValueError:
+                continue
+        return False
 
 
 @lru_cache
