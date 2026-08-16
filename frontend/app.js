@@ -2,10 +2,13 @@
    PhishGuard — Frontend Application Logic
    ========================================================================== */
 
-// Base API URL (falls back to relative path for production deployment)
+// Base API URL.
+//   - Local dev: use the local FastAPI server.
+//   - Anywhere else (Render UI, GitHub Pages mirror, custom domain): use the
+//     deployed API, overridable via window.PHISHGUARD_API_URL.
 const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? 'http://localhost:8000'
-  : '';
+  : (window.PHISHGUARD_API_URL || 'https://phishguard-api-dkoj.onrender.com');
 
 // DOM Elements
 const form = document.getElementById('url-form');
