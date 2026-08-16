@@ -37,8 +37,11 @@ data/
 | Total URLs | ~235,795 |
 | Legitimate URLs | ~134,850 |
 | Phishing URLs | ~100,945 |
-| Label column | `label` (0 = legitimate, 1 = phishing) |
+| Label column | `label` (0 = phishing, 1 = legitimate) |
 | URL column | `url` |
+
+> Note: the raw PhiUSIIL dataset encodes `0 = phishing`, `1 = legitimate`.
+> `ml/train.py` converts this so that internally `y = 1` always means phishing.
 
 ---
 

@@ -19,33 +19,33 @@ import numpy as np
 
 # Human-readable labels for each feature name
 FEATURE_LABELS: dict[str, str] = {
-    "url_length":               "URL length",
-    "domain_length":            "Domain length",
-    "path_length":              "Path length",
-    "num_dots":                 "Number of dots (.)",
-    "num_hyphens":              "Number of hyphens (-)",
-    "num_underscores":          "Number of underscores (_)",
-    "num_slashes":              "Number of slashes (/)",
-    "num_question_marks":       "Number of question marks (?)",
-    "num_at_symbols":           "Contains @ symbol",
-    "num_digits":               "Number of digits",
-    "digit_ratio":              "Digit ratio in URL",
-    "has_ip_address":           "Domain is an IP address",
-    "uses_https":               "Uses HTTPS",
-    "has_port":                 "Non-standard port in URL",
-    "subdomain_count":          "Number of subdomains",
-    "has_suspicious_tld":       "Suspicious top-level domain",
+    "url_length": "URL length",
+    "domain_length": "Domain length",
+    "path_length": "Path length",
+    "num_dots": "Number of dots (.)",
+    "num_hyphens": "Number of hyphens (-)",
+    "num_underscores": "Number of underscores (_)",
+    "num_slashes": "Number of slashes (/)",
+    "num_question_marks": "Number of question marks (?)",
+    "num_at_symbols": "Contains @ symbol",
+    "num_digits": "Number of digits",
+    "digit_ratio": "Digit ratio in URL",
+    "has_ip_address": "Domain is an IP address",
+    "uses_https": "Uses HTTPS",
+    "has_port": "Non-standard port in URL",
+    "subdomain_count": "Number of subdomains",
+    "has_suspicious_tld": "Suspicious top-level domain",
     "suspicious_keyword_count": "Suspicious keywords in URL",
-    "has_encoded_chars":        "Percent-encoded characters",
-    "double_slash_in_path":     "Double slash in path",
-    "has_hex_encoding":         "Hex encoding detected",
-    "shortening_service":       "URL shortening service used",
-    "url_entropy":              "URL randomness (entropy)",
-    "domain_hyphen_count":      "Hyphens in domain name",
-    "path_token_count":         "Number of path segments",
-    "num_special_chars":        "Special characters in URL",
-    "is_brand_spoofed":         "Spoofed brand name detected in domain",
-    "is_whitelisted_domain":    "Known trusted legitimate domain",
+    "has_encoded_chars": "Percent-encoded characters",
+    "double_slash_in_path": "Double slash in path",
+    "has_hex_encoding": "Hex encoding detected",
+    "shortening_service": "URL shortening service used",
+    "url_entropy": "URL randomness (entropy)",
+    "domain_hyphen_count": "Hyphens in domain name",
+    "path_token_count": "Number of path segments",
+    "num_special_chars": "Special characters in URL",
+    "is_brand_spoofed": "Spoofed brand name detected in domain",
+    "is_whitelisted_domain": "Known trusted legitimate domain",
 }
 
 
@@ -71,6 +71,7 @@ class PhishGuardExplainer:
         """
         try:
             import shap
+
             self._shap_explainer = shap.TreeExplainer(model)
         except Exception as e:
             raise RuntimeError(
@@ -102,31 +103,41 @@ class PhishGuardExplainer:
                 - direction: "phishing" if positive contribution, "legitimate" if negative
                 - impact:    "high" | "medium" | "low" based on relative magnitude
         """
-        import numpy as np
 
         X = np.array(feature_vector).reshape(1, -1)
         shap_values = self._shap_explainer.shap_values(X)
 
-        # For binary classifiers, shap_values may be a list [class0, class1]
-        # We want class 1 (phishing) contributions
+        # TreeExplainer output shapes vary by model / SHAP version:
+        #   - XGBoost binary classifier -> list [class0, class1]
+        #   - sklearn tree              -> ndarray (1, n_features, 2)
+        #   - single-output tree        -> ndarray (1, n_features)
+        # We always want the positive (phishing) class contributions.
         if isinstance(shap_values, list):
-            contributions = shap_values[1][0]
+            contributions = np.asarray(shap_values[1])[0]
         else:
-            contributions = shap_values[0]
+            values = np.asarray(shap_values)
+            if values.ndim == 3:
+                contributions = values[0]
+                if contributions.shape[-1] == 2:
+                    contributions = contributions[:, 1]
+            else:
+                contributions = values[0]
 
         # Build explanation items
         items = []
-        for i, (name, shap_val, feat_val) in enumerate(
-            zip(self.feature_names, contributions, feature_vector)
+        for name, shap_val, feat_val in zip(
+            self.feature_names, contributions, feature_vector, strict=False
         ):
-            items.append({
-                "feature":    name,
-                "label":      FEATURE_LABELS.get(name, name),
-                "value":      round(float(feat_val), 4),
-                "shap_value": round(float(shap_val), 4),
-                "direction":  "phishing" if shap_val > 0 else "legitimate",
-                "impact":     "",  # filled below
-            })
+            items.append(
+                {
+                    "feature": name,
+                    "label": FEATURE_LABELS.get(name, name),
+                    "value": round(float(feat_val), 4),
+                    "shap_value": round(float(shap_val), 4),
+                    "direction": "phishing" if shap_val > 0 else "legitimate",
+                    "impact": "",  # filled below
+                }
+            )
 
         # Sort by absolute SHAP value (most impactful first)
         items.sort(key=lambda x: abs(x["shap_value"]), reverse=True)

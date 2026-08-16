@@ -82,7 +82,7 @@ def validate_url(url: str) -> str:
         raise URLValidationError(
             code="INVALID_URL",
             message="The provided input could not be parsed as a URL.",
-        )
+        ) from None
 
     if not parsed.netloc:
         raise URLValidationError(

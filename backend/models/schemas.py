@@ -15,8 +15,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
-
 # ─── Request Schemas ──────────────────────────────────────────────────────────
+
 
 class AnalyzeRequest(BaseModel):
     """Request body for POST /api/analyze."""
@@ -31,18 +31,19 @@ class AnalyzeRequest(BaseModel):
 
     @field_validator("url")
     @classmethod
-    def url_must_have_scheme(cls, v: str) -> str:
-        """Ensure the URL has a recognizable scheme."""
-        v = v.strip()
-        if not v.startswith(("http://", "https://", "ftp://")):
-            raise ValueError(
-                "URL must start with http://, https://, or ftp://. "
-                "Example: https://example.com"
-            )
-        return v
+    def url_normalize(cls, v: str) -> str:
+        """
+        Normalize the URL before service-layer validation.
+
+        Scheme enforcement (unsafe URI rejection, https auto-prepend) is
+        handled centrally by `backend.services.validator.validate_url` so all
+        clients get the same machine-readable error codes.
+        """
+        return v.strip()
 
 
 # ─── Response Schemas ─────────────────────────────────────────────────────────
+
 
 class ExplanationItem(BaseModel):
     """A single feature explanation item."""
@@ -74,15 +75,11 @@ class AnalyzeResponse(BaseModel):
         ge=0.0,
         le=1.0,
     )
-    features: dict[str, float] = Field(
-        description="All extracted feature values for this URL."
-    )
+    features: dict[str, float] = Field(description="All extracted feature values for this URL.")
     explanation: list[ExplanationItem] = Field(
         description="Top-N most influential features for this prediction."
     )
-    timestamp: datetime = Field(
-        description="UTC timestamp of the analysis."
-    )
+    timestamp: datetime = Field(description="UTC timestamp of the analysis.")
 
 
 class HealthResponse(BaseModel):

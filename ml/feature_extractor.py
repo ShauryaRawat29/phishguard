@@ -1,7 +1,7 @@
 """
 feature_extractor.py
 ====================
-Extracts 25 structural and lexical features from a raw URL string.
+Extracts 27 structural and lexical features from a raw URL string.
 
 All features are computed from the URL string only — no network requests,
 no DNS lookups, no external API calls. This ensures fast, safe, offline inference.
@@ -16,34 +16,81 @@ Usage:
 
 import math
 import re
+from difflib import SequenceMatcher
 from urllib.parse import urlparse
-
 
 # ─── Known URL shortening services ────────────────────────────────────────────
 SHORTENING_SERVICES: set[str] = {
-    "bit.ly", "tinyurl.com", "goo.gl", "ow.ly", "t.co", "is.gd",
-    "buff.ly", "adf.ly", "shorte.st", "cutt.ly", "rebrand.ly",
-    "tiny.cc", "lnkd.in", "tr.im", "x.co", "v.gd", "qr.net",
+    "bit.ly",
+    "tinyurl.com",
+    "goo.gl",
+    "ow.ly",
+    "t.co",
+    "is.gd",
+    "buff.ly",
+    "adf.ly",
+    "shorte.st",
+    "cutt.ly",
+    "rebrand.ly",
+    "tiny.cc",
+    "lnkd.in",
+    "tr.im",
+    "x.co",
+    "v.gd",
+    "qr.net",
 }
 
 # ─── Suspicious top-level domains (free / abused TLDs) ────────────────────────
 SUSPICIOUS_TLDS: set[str] = {
-    "tk", "ml", "ga", "cf", "gq",       # Freenom free TLDs
-    "xyz", "top", "club", "online",      # Cheap / commonly abused
-    "work", "live", "site", "website",
-    "loan", "click", "link", "shop",
-    "buzz", "info", "biz",
+    "tk",
+    "ml",
+    "ga",
+    "cf",
+    "gq",  # Freenom free TLDs
+    "xyz",
+    "top",
+    "club",
+    "online",  # Cheap / commonly abused
+    "work",
+    "live",
+    "site",
+    "website",
+    "loan",
+    "click",
+    "link",
+    "shop",
+    "buzz",
+    "info",
+    "biz",
 }
 
 # ─── Phishing keyword vocabulary ─────────────────────────────────────────────
 PHISHING_KEYWORDS: list[str] = [
-    "login", "signin", "sign-in", "logon",
-    "account", "verify", "verification",
-    "secure", "security", "update", "confirm",
-    "banking", "bank", "paypal", "ebay",
-    "password", "credential", "recover",
-    "alert", "suspend", "unlock", "urgent",
-    "validate", "authorize", "billing",
+    "login",
+    "signin",
+    "sign-in",
+    "logon",
+    "account",
+    "verify",
+    "verification",
+    "secure",
+    "security",
+    "update",
+    "confirm",
+    "banking",
+    "bank",
+    "paypal",
+    "ebay",
+    "password",
+    "credential",
+    "recover",
+    "alert",
+    "suspend",
+    "unlock",
+    "urgent",
+    "validate",
+    "authorize",
+    "billing",
 ]
 
 # ─── Popular Brand Domains (for brand spoofing / typosquatting detection) ─────
@@ -64,15 +111,32 @@ BRAND_DOMAINS: dict[str, str] = {
 
 # ─── Top Legitimate Apex Domains ──────────────────────────────────────────────
 TOP_LEGITIMATE_DOMAINS: set[str] = {
-    "google.com", "youtube.com", "facebook.com", "amazon.com", "apple.com",
-    "microsoft.com", "wikipedia.org", "github.com", "paypal.com", "twitter.com",
-    "instagram.com", "linkedin.com", "netflix.com", "reddit.com", "yahoo.com",
-    "bing.com", "whatsapp.com", "zoom.us", "chase.com", "wellsfargo.com",
-    "bankofamerica.com", "adobe.com", "wordpress.org", "cloudflare.com",
+    "google.com",
+    "youtube.com",
+    "facebook.com",
+    "amazon.com",
+    "apple.com",
+    "microsoft.com",
+    "wikipedia.org",
+    "github.com",
+    "paypal.com",
+    "twitter.com",
+    "instagram.com",
+    "linkedin.com",
+    "netflix.com",
+    "reddit.com",
+    "yahoo.com",
+    "bing.com",
+    "whatsapp.com",
+    "zoom.us",
+    "chase.com",
+    "wellsfargo.com",
+    "bankofamerica.com",
+    "adobe.com",
+    "wordpress.org",
+    "cloudflare.com",
 }
-_IPV4_RE = re.compile(
-    r"^(\d{1,3}\.){3}\d{1,3}$"
-)
+_IPV4_RE = re.compile(r"^(\d{1,3}\.){3}\d{1,3}$")
 
 # ─── Percent-encoding pattern ─────────────────────────────────────────────────
 _ENCODED_CHARS_RE = re.compile(r"%[0-9a-fA-F]{2}")
@@ -80,12 +144,42 @@ _ENCODED_CHARS_RE = re.compile(r"%[0-9a-fA-F]{2}")
 # ─── Hex IP pattern (0x...) ──────────────────────────────────────────────────
 _HEX_IP_RE = re.compile(r"0x[0-9a-fA-F]+", re.IGNORECASE)
 
+# ─── Fuzzy brand / typosquatting thresholds ──────────────────────────────────
+_BRAND_FUZZY_MIN_LENGTH = 5  # ignore very short tokens (e.g. "www")
+_BRAND_FUZZY_RATIO = 0.83  # difflib similarity cutoff for a typo
+_TOKEN_RE = re.compile(r"[a-z0-9]+")
+
+# ─── Unicode confusables (IDN homograph attack) ──────────────────────────────
+# Maps lookalike letters from non-Latin scripts to their Latin equivalents so
+# a domain like "аррӏе.com" (Cyrillic "apple") can be recognized as spoofed.
+_CONFUSABLES: dict[str, str] = {
+    "\u0430": "a",  # Cyrillic a
+    "\u0435": "e",  # Cyrillic e
+    "\u043e": "o",  # Cyrillic o
+    "\u0440": "p",  # Cyrillic r (er)
+    "\u0441": "c",  # Cyrillic s (es)
+    "\u0445": "x",  # Cyrillic x (ha)
+    "\u0443": "y",  # Cyrillic u
+    "\u043d": "h",  # Cyrillic n (en)
+    "\u043a": "k",  # Cyrillic k
+    "\u043c": "m",  # Cyrillic m
+    "\u0432": "b",  # Cyrillic v (ve)
+    "\u0442": "t",  # Cyrillic t (te)
+    "\u0437": "z",  # Cyrillic z (ze)
+    "\u04cf": "l",  # Cyrillic palochka (looks like l)
+    "\u03b1": "a",  # Greek alpha
+    "\u03b5": "e",  # Greek epsilon
+    "\u03bf": "o",  # Greek omicron
+    "\u03b9": "i",  # Greek iota
+    "\u03c1": "p",  # Greek rho
+}
+
 
 class FeatureExtractor:
     """
     Extracts a fixed-length feature vector from a URL string.
 
-    All 25 features are deterministic, fast, and require no external calls.
+    All 27 features are deterministic, fast, and require no external calls.
     The same extractor is used during both model training and live inference,
     ensuring consistent feature representation.
     """
@@ -137,9 +231,8 @@ class FeatureExtractor:
 
         parsed = urlparse(full_url)
         scheme = parsed.scheme.lower()
-        netloc = parsed.netloc.lower()      # includes port if present
+        netloc = parsed.netloc.lower()  # includes port if present
         path = parsed.path
-        query = parsed.query
 
         # Strip port from netloc to get the pure host
         host = netloc.split(":")[0]
@@ -151,43 +244,38 @@ class FeatureExtractor:
 
         return {
             # ── Length-based features ──────────────────────────────────────
-            "url_length":             self._url_length(full_url),
-            "domain_length":          self._domain_length(host),
-            "path_length":            self._path_length(path),
-
+            "url_length": self._url_length(full_url),
+            "domain_length": self._domain_length(host),
+            "path_length": self._path_length(path),
             # ── Character count features ───────────────────────────────────
-            "num_dots":               full_url.count("."),
-            "num_hyphens":            full_url.count("-"),
-            "num_underscores":        full_url.count("_"),
-            "num_slashes":            full_url.count("/"),
-            "num_question_marks":     full_url.count("?"),
-            "num_at_symbols":         full_url.count("@"),
-            "num_digits":             sum(c.isdigit() for c in full_url),
-            "digit_ratio":            self._digit_ratio(full_url),
-
+            "num_dots": full_url.count("."),
+            "num_hyphens": full_url.count("-"),
+            "num_underscores": full_url.count("_"),
+            "num_slashes": full_url.count("/"),
+            "num_question_marks": full_url.count("?"),
+            "num_at_symbols": full_url.count("@"),
+            "num_digits": sum(c.isdigit() for c in full_url),
+            "digit_ratio": self._digit_ratio(full_url),
             # ── Domain-based features ──────────────────────────────────────
-            "has_ip_address":         int(self._has_ip_address(host)),
-            "uses_https":             int(scheme == "https"),
-            "has_port":               int(":" in netloc),
-            "subdomain_count":        len(domain_parts),
-            "has_suspicious_tld":     int(tld in SUSPICIOUS_TLDS),
-            "domain_hyphen_count":    host.count("-"),
-
+            "has_ip_address": int(self._has_ip_address(host)),
+            "uses_https": int(scheme == "https"),
+            "has_port": int(":" in netloc),
+            "subdomain_count": len(domain_parts),
+            "has_suspicious_tld": int(tld in SUSPICIOUS_TLDS),
+            "domain_hyphen_count": host.count("-"),
             # ── Content / pattern features ─────────────────────────────────
             "suspicious_keyword_count": self._keyword_count(full_url.lower()),
-            "has_encoded_chars":      int(bool(_ENCODED_CHARS_RE.search(full_url))),
-            "double_slash_in_path":   int("//" in path),
-            "has_hex_encoding":       int(bool(_HEX_IP_RE.search(full_url))),
-            "shortening_service":     int(host in SHORTENING_SERVICES),
-
+            "has_encoded_chars": int(bool(_ENCODED_CHARS_RE.search(full_url))),
+            "double_slash_in_path": int("//" in path),
+            "has_hex_encoding": int(bool(_HEX_IP_RE.search(full_url))),
+            "shortening_service": int(host in SHORTENING_SERVICES),
             # ── Statistical features ───────────────────────────────────────
-            "url_entropy":            self._shannon_entropy(full_url),
-
+            "url_entropy": self._shannon_entropy(full_url),
             # ── Path features ──────────────────────────────────────────────
-            "path_token_count":       self._path_token_count(path),
-            "num_special_chars":      self._count_special_chars(full_url),
-            "is_brand_spoofed":       int(self._is_brand_spoofed(host)),
-            "is_whitelisted_domain":  int(self._is_whitelisted_domain(host)),
+            "path_token_count": self._path_token_count(path),
+            "num_special_chars": self._count_special_chars(full_url),
+            "is_brand_spoofed": int(self._is_brand_spoofed(host)),
+            "is_whitelisted_domain": int(self._is_whitelisted_domain(host)),
         }
 
     def extract_as_list(self, url: str) -> list[int | float]:
@@ -267,10 +355,7 @@ class FeatureExtractor:
         for char in text:
             freq[char] = freq.get(char, 0) + 1
         length = len(text)
-        return -sum(
-            (count / length) * math.log2(count / length)
-            for count in freq.values()
-        )
+        return -sum((count / length) * math.log2(count / length) for count in freq.values())
 
     @staticmethod
     def _path_token_count(path: str) -> int:
@@ -295,16 +380,97 @@ class FeatureExtractor:
     @staticmethod
     def _is_brand_spoofed(host: str) -> bool:
         """
-        Detect typosquatting / brand spoofing in domain.
+        Detect typosquatting / brand spoofing in a domain.
 
-        Returns True if host contains a famous brand name (e.g. 'paypal')
-        but host does NOT end with the official domain (e.g. 'paypal.com').
-        Example: 'paypal.ab' -> True, 'paypal-secure.net' -> True, 'paypal.com' -> False.
+        Returns True if the host impersonates a known brand via any of:
+          1. Direct containment: the brand name appears but the host is not the
+             official domain (e.g. 'paypal-security.net').
+          2. Fuzzy typosquatting: the second-level domain closely matches a brand
+             name (e.g. 'gooogle.com', 'paypa1-secure-login.xyz').
+          3. IDN homograph: a punycode or non-Latin domain that decodes to a brand
+             lookalike (e.g. Cyrillic 'аррӏе.com' = "apple").
+
+        A legitimate subdomain like 'www.paypal.com' or 'mail.google.com' is
+        NOT considered spoofed.
         """
         host_lower = host.lower()
+
+        # 1. Direct containment of a brand outside the official domain
         for brand, official_domain in BRAND_DOMAINS.items():
-            if brand in host_lower:
-                if not (host_lower == official_domain or host_lower.endswith("." + official_domain)):
+            if brand in host_lower and not (
+                host_lower == official_domain or host_lower.endswith("." + official_domain)
+            ):
+                return True
+
+        # 2. Fuzzy typosquatting on the second-level domain
+        sld = FeatureExtractor._second_level_domain(host_lower)
+        if sld and FeatureExtractor._fuzzy_brand_match(sld):
+            return True
+
+        # 3. IDN / Unicode homograph attack
+        return bool(FeatureExtractor._has_homograph(host_lower))
+
+    @staticmethod
+    def _second_level_domain(host: str) -> str:
+        """Return the second-level domain (e.g. 'paypal' from 'paypal.com')."""
+        parts = host.split(".")
+        return parts[-2] if len(parts) >= 2 else host
+
+    @staticmethod
+    def _fuzzy_brand_match(text: str) -> bool:
+        """
+        Return True if any token of `text` closely resembles a known brand.
+
+        Uses difflib's SequenceMatcher ratio on alphabetic tokens of at least
+        `_BRAND_FUZZY_MIN_LENGTH` characters. Purely lexical — no network calls.
+        """
+        tokens = [t for t in _TOKEN_RE.findall(text) if len(t) >= _BRAND_FUZZY_MIN_LENGTH]
+        for token in tokens:
+            for brand in BRAND_DOMAINS:
+                # An exact brand token is handled by the containment check;
+                # only genuine typos (non-exact, close matches) count here.
+                if token == brand:
+                    continue
+                if SequenceMatcher(None, token, brand).ratio() >= _BRAND_FUZZY_RATIO:
+                    return True
+        return False
+
+    @staticmethod
+    def _has_homograph(host: str) -> bool:
+        """
+        Detect IDN homograph attacks.
+
+        Checks punycode (xn--) labels by decoding them and normalizing confusable
+        non-Latin letters to their Latin equivalents, then looking for a brand.
+        Also checks raw host labels that contain confusable characters.
+        """
+        for label in host.split("."):
+            if label.startswith("xn--"):
+                try:
+                    decoded = label[4:].encode("ascii").decode("punycode")
+                except Exception:
+                    decoded = ""
+                if FeatureExtractor._looks_like_brand(decoded):
+                    return True
+            elif any(ch in _CONFUSABLES for ch in label):
+                if FeatureExtractor._looks_like_brand(label):
+                    return True
+        return False
+
+    @staticmethod
+    def _looks_like_brand(text: str) -> bool:
+        """
+        Return True if `text`, after normalizing confusable letters to Latin,
+        contains or closely matches a known brand name.
+        """
+        normalized = "".join(_CONFUSABLES.get(ch, ch) for ch in text.lower())
+        tokens = [t for t in _TOKEN_RE.findall(normalized) if len(t) >= _BRAND_FUZZY_MIN_LENGTH]
+        for token in tokens:
+            for brand in BRAND_DOMAINS:
+                if (
+                    brand in token
+                    or SequenceMatcher(None, token, brand).ratio() >= _BRAND_FUZZY_RATIO
+                ):
                     return True
         return False
 

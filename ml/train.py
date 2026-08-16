@@ -4,7 +4,7 @@ train.py
 End-to-end model training script for PhishGuard.
 
 1. Loads raw dataset from data/phishing_urls.csv.
-2. Extracts 25 URL features using ml.feature_extractor.FeatureExtractor.
+2. Extracts 27 URL features using ml.feature_extractor.FeatureExtractor.
 3. Splits data into Train (70%), Validation (15%), and Test (15%) sets.
 4. Trains Logistic Regression, Random Forest, and XGBoost models.
 5. Evaluates model performance (Accuracy, Precision, Recall, F1-score, ROC-AUC).
@@ -18,15 +18,15 @@ import json
 import os
 import sys
 import time
+
 import joblib
 import numpy as np
 import pandas as pd
-
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, roc_auc_score
+from sklearn.model_selection import train_test_split
 from xgboost import XGBClassifier
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
 
 # Ensure root path is accessible
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -56,7 +56,7 @@ def main():
         print("   Sampling 50,000 URLs for efficient training iteration...")
         df = df.sample(n=50000, random_state=42).reset_index(drop=True)
 
-    print(f"Extracting 25 features for {len(df)} URLs using FeatureExtractor...")
+    print(f"Extracting 27 features for {len(df)} URLs using FeatureExtractor...")
     extractor = FeatureExtractor()
     start_time = time.time()
 
@@ -78,11 +78,11 @@ def main():
 
     X = np.array(feature_rows)
     raw_y = df[label_col].values
-    
+
     # In PhiUSIIL dataset: label 0 = Phishing, label 1 = Legitimate.
     # Convert target so: y = 1 (PHISHING), y = 0 (LEGITIMATE)
     y = (raw_y == 0).astype(int)
-    print(f"Target distribution: Phishing (1)={np.sum(y==1)}, Legitimate (0)={np.sum(y==0)}")
+    print(f"Target distribution: Phishing (1)={np.sum(y == 1)}, Legitimate (0)={np.sum(y == 0)}")
 
     # Stratified Train (70%) / Validation (15%) / Test (15%)
     X_train, X_temp, y_train, y_temp = train_test_split(
@@ -92,7 +92,7 @@ def main():
         X_temp, y_temp, test_size=0.50, random_state=42, stratify=y_temp
     )
 
-    print(f"\nData Splits:")
+    print("\nData Splits:")
     print(f"   Train set:      {X_train.shape[0]} samples")
     print(f"   Validation set: {X_val.shape[0]} samples")
     print(f"   Test set:       {X_test.shape[0]} samples")
@@ -100,8 +100,12 @@ def main():
     # Models to evaluate
     models = {
         "Logistic Regression": LogisticRegression(max_iter=1000, random_state=42),
-        "Random Forest": RandomForestClassifier(n_estimators=100, max_depth=15, random_state=42, n_jobs=-1),
-        "XGBoost": XGBClassifier(n_estimators=150, max_depth=6, learning_rate=0.1, random_state=42, n_jobs=-1),
+        "Random Forest": RandomForestClassifier(
+            n_estimators=100, max_depth=15, random_state=42, n_jobs=-1
+        ),
+        "XGBoost": XGBClassifier(
+            n_estimators=150, max_depth=6, learning_rate=0.1, random_state=42, n_jobs=-1
+        ),
     }
 
     best_model_name = None
@@ -120,7 +124,9 @@ def main():
 
         # Evaluate on validation set
         y_val_pred = model.predict(X_val)
-        y_val_proba = model.predict_proba(X_val)[:, 1] if hasattr(model, "predict_proba") else y_val_pred
+        y_val_proba = (
+            model.predict_proba(X_val)[:, 1] if hasattr(model, "predict_proba") else y_val_pred
+        )
 
         acc = accuracy_score(y_val, y_val_pred)
         prec = precision_score(y_val, y_val_pred, zero_division=0)
@@ -137,7 +143,9 @@ def main():
             "Train_Time_s": round(fit_time, 2),
         }
 
-        print(f"   -> {name} | F1: {f1:.4f} | Accuracy: {acc:.4f} | Recall: {rec:.4f} | Time: {fit_time:.2f}s")
+        print(
+            f"   -> {name} | F1: {f1:.4f} | Accuracy: {acc:.4f} | Recall: {rec:.4f} | Time: {fit_time:.2f}s"
+        )
 
         if f1 > best_f1:
             best_f1 = f1

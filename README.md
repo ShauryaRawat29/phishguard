@@ -27,7 +27,7 @@
 ## What It Does
 
 1. You enter a URL into the web interface
-2. The system extracts 25 structural and lexical features from the URL
+2. The system extracts 27 structural and lexical features from the URL
 3. An XGBoost model classifies it as **PHISHING** or **LEGITIMATE**
 4. A risk score and confidence level are calculated
 5. SHAP values explain *which features* drove the prediction
@@ -51,11 +51,18 @@
 phishguard/
 ├── ml/                  # Feature extraction, training, explainability
 ├── notebooks/           # Jupyter ML pipeline notebook
-├── models/              # Trained model artifacts
+├── models/              # Trained artifacts (gitignored — see scripts/rebuild_model.py)
 ├── backend/             # FastAPI application
+│   ├── main.py          # App entry: middleware, routing, static mount
+│   ├── config.py        # pydantic-settings configuration
+│   ├── dependencies.py  # DI providers (predictor)
+│   ├── rate_limit.py    # slowapi limiter + per-route limits
+│   ├── routes/          # API endpoints
+│   └── services/        # validator, predictor
 ├── frontend/            # Static web interface
-├── data/                # Dataset (see data/README.md to download)
-├── docs/                # Charts, diagrams, screenshots
+├── data/                # Dataset (gitignored, see data/README.md to download)
+├── docs/                # Mirror of frontend/ for GitHub Pages (keep in sync)
+├── scripts/             # sync_docs.py, rebuild_model.py
 └── tests/               # Unit and integration tests
 ```
 
@@ -86,10 +93,17 @@ pip install -r requirements.txt
 pip install -r requirements-dev.txt
 ```
 
-### 4. Download the dataset
-See [data/README.md](data/README.md) for instructions.
+### 4. Obtain the trained model
+The model artifact is not committed. Download the dataset (see
+[data/README.md](data/README.md)) and rebuild it, or retrain directly:
 
-### 5. Run the ML pipeline
+```bash
+python scripts/rebuild_model.py    # downloads data if missing, then trains
+# or, for faster iteration:
+python ml/train.py
+```
+
+### 5. (Alternative) Run the ML pipeline interactively
 Open `notebooks/phishing_detection.ipynb` in Jupyter and run all cells.
 
 ### 6. Start the backend
@@ -98,7 +112,33 @@ uvicorn backend.main:app --reload
 ```
 
 ### 7. Open the frontend
-Open `frontend/index.html` in your browser.
+Open `frontend/index.html` in your browser, or visit `http://localhost:8000`
+where FastAPI serves the UI directly.
+
+---
+
+## Development
+
+```bash
+pytest                       # run tests
+ruff check .                 # lint
+ruff format --check .        # format check
+python scripts/sync_docs.py  # keep docs/ mirror in sync with frontend/
+```
+
+CI runs lint, format, tests (with coverage), and verifies the `docs/` mirror on
+every push and pull request.
+
+---
+
+## Security Notes
+
+- The server **never** makes network requests to the URLs it analyzes — all
+  feature extraction is lexical/structural, preventing SSRF.
+- Rate limiting is applied per-IP on `POST /api/analyze`
+  (`RATE_LIMIT_PER_MINUTE`). Behind a proxy set `TRUST_PROXY_HEADERS=true`.
+- HTTP responses carry hardened security headers.
+- Unsafe URI schemes (`file://`, `data:`, `javascript:`) are rejected.
 
 ---
 

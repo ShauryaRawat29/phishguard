@@ -8,6 +8,7 @@ Run with: pytest tests/test_feature_extractor.py -v
 """
 
 import pytest
+
 from ml.feature_extractor import FeatureExtractor
 
 extractor = FeatureExtractor()
@@ -15,17 +16,21 @@ extractor = FeatureExtractor()
 
 # ─── Fixtures ─────────────────────────────────────────────────────────────────
 
+
 @pytest.fixture
 def legitimate_url():
     return "https://github.com/user/repository"
+
 
 @pytest.fixture
 def phishing_url():
     return "http://paypal-secure-login.xyz/account/verify?token=abc123@evil.com"
 
+
 @pytest.fixture
 def ip_url():
     return "http://192.168.1.1/login"
+
 
 @pytest.fixture
 def shortener_url():
@@ -33,6 +38,7 @@ def shortener_url():
 
 
 # ─── Tests: Length features ───────────────────────────────────────────────────
+
 
 def test_url_length_is_accurate(legitimate_url):
     features = extractor.extract(legitimate_url)
@@ -51,6 +57,7 @@ def test_path_length(legitimate_url):
 
 
 # ─── Tests: Character counts ──────────────────────────────────────────────────
+
 
 def test_num_dots(legitimate_url):
     # "https://github.com/user/repository" → 1 dot in domain
@@ -74,6 +81,7 @@ def test_digit_ratio_is_between_0_and_1(legitimate_url):
 
 
 # ─── Tests: Domain features ───────────────────────────────────────────────────
+
 
 def test_has_ip_address_true(ip_url):
     features = extractor.extract(ip_url)
@@ -130,6 +138,7 @@ def test_suspicious_tld_false(legitimate_url):
 
 # ─── Tests: Content / pattern features ───────────────────────────────────────
 
+
 def test_suspicious_keywords_phishing(phishing_url):
     features = extractor.extract(phishing_url)
     # phishing_url contains "login", "secure", "account", "verify"
@@ -163,6 +172,7 @@ def test_shortening_service_false(legitimate_url):
 
 # ─── Tests: Statistical features ─────────────────────────────────────────────
 
+
 def test_entropy_is_positive(legitimate_url):
     features = extractor.extract(legitimate_url)
     assert features["url_entropy"] > 0.0
@@ -171,11 +181,13 @@ def test_entropy_is_positive(legitimate_url):
 def test_entropy_empty_string():
     # Edge case: entropy of a single repeated character is 0
     from ml.feature_extractor import FeatureExtractor as FE
+
     e = FE._shannon_entropy("aaaa")
     assert e == 0.0
 
 
 # ─── Tests: Feature vector completeness ──────────────────────────────────────
+
 
 def test_all_features_present(legitimate_url):
     features = extractor.extract(legitimate_url)
@@ -193,3 +205,39 @@ def test_extract_as_list_order(legitimate_url):
     feature_list = extractor.extract_as_list(legitimate_url)
     for i, name in enumerate(FeatureExtractor.FEATURE_NAMES):
         assert feature_list[i] == feature_dict[name]
+
+
+# ─── Tests: Brand spoofing / typosquatting / homographs ─────────────────────
+
+
+def test_legitimate_subdomain_not_spoofed():
+    features = extractor.extract("https://www.paypal.com/login")
+    assert features["is_brand_spoofed"] == 0
+
+
+def test_brand_containment_spoofed():
+    features = extractor.extract("http://paypal-secure-login.xyz/account/verify")
+    assert features["is_brand_spoofed"] == 1
+
+
+def test_fuzzy_digit_typo_spoofed():
+    # "paypa1" is a one-edit-digit typo of "paypal" — not a substring match.
+    features = extractor.extract("http://paypa1-secure-login.xyz/account/verify?token=abc123")
+    assert features["is_brand_spoofed"] == 1
+
+
+def test_fuzzy_letter_typo_spoofed():
+    features = extractor.extract("http://gooogle.com/account")
+    assert features["is_brand_spoofed"] == 1
+
+
+def test_common_word_not_spoofed():
+    # "case" is close to "chase" but is a legitimate English word.
+    features = extractor.extract("http://case.com/")
+    assert features["is_brand_spoofed"] == 0
+
+
+def test_punycode_homograph_spoofed():
+    # xn--80ak6aa92e decodes to a Cyrillic lookalike of "apple".
+    features = extractor.extract("http://xn--80ak6aa92e.com/")
+    assert features["is_brand_spoofed"] == 1

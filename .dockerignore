@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Data & model artifacts (large)
+data/
+models/*.joblib
+
+# Tests, notebooks, docs mirror
+tests/
+notebooks/
+docs/
+
+# VCS / editor
+.git/
+.vscode/
+.idea/
+
+# Environment
+.env*
+!requirements*.txt
