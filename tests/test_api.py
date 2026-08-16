@@ -267,3 +267,76 @@ def test_rate_limit_exceeded_returns_429():
         assert c.post("/limited").status_code == 200
         assert c.post("/limited").status_code == 200
         assert c.post("/limited").status_code == 429
+
+
+# ─── Rate-limit key edge case ────────────────────────────────────────────────
+
+
+def test_client_key_unknown_when_no_client():
+    from backend.rate_limit import _client_key
+
+    class FakeRequest:
+        client = None
+        headers = {}
+
+    assert _client_key(FakeRequest()) == "unknown"
+
+
+# ─── Analyzer error paths ────────────────────────────────────────────────────
+
+
+def test_analyze_prediction_failure_returns_500(client):
+    from backend.main import app
+
+    class BoomPredictor:
+        is_loaded = True
+
+        def predict(self, url):
+            raise Exception("boom")
+
+    app.state.predictor = BoomPredictor()
+    resp = client.post("/api/analyze", json={"url": "https://example.com"})
+    assert resp.status_code == 500
+    assert resp.json()["detail"]["error"] == "PREDICTION_FAILED"
+
+
+def test_validator_handles_urlparse_failure(monkeypatch):
+    import backend.services.validator as validator
+    from backend.services.validator import URLValidationError, validate_url
+
+    def boom(url):
+        raise ValueError("unparseable")
+
+    monkeypatch.setattr(validator, "urlparse", boom)
+    with pytest.raises(URLValidationError) as exc:
+        validate_url("https://example.com")
+    assert exc.value.code == "INVALID_URL"
+
+
+# ─── CORS wildcard rejected in production ────────────────────────────────────
+
+
+def test_cors_wildcard_ignored_in_production(monkeypatch):
+    import importlib
+
+    from backend.config import settings
+
+    monkeypatch.setattr(settings, "app_env", "production")
+    monkeypatch.setattr(settings, "cors_origins", "*")
+    import backend.main as main
+
+    importlib.reload(main)
+    app = main.app
+    with TestClient(app) as c:
+        resp = c.options(
+            "/api/health",
+            headers={
+                "Origin": "https://evil.example.com",
+                "Access-Control-Request-Method": "GET",
+            },
+        )
+        assert "Access-Control-Allow-Origin" not in resp.headers
+
+    monkeypatch.setattr(settings, "app_env", "development")
+    monkeypatch.setattr(settings, "cors_origins", "*")
+    importlib.reload(main)

@@ -312,3 +312,45 @@ def test_new_suspicious_tld_detected():
     # "icu" is one of the newly added suspicious TLDs.
     features = extractor.extract("http://free-gift.icu/login")
     assert features["has_suspicious_tld"] == 1
+
+
+# ─── Edge cases ──────────────────────────────────────────────────────────────
+
+
+def test_scheme_is_auto_prepended():
+    # A scheme-less URL gets https:// prepended before feature extraction.
+    features = extractor.extract("example.com/login")
+    assert features["uses_https"] == 1
+    assert features["num_dots"] >= 1
+
+
+def test_digit_ratio_empty_string():
+    from ml.feature_extractor import FeatureExtractor as FE
+
+    assert FE._digit_ratio("") == 0.0
+
+
+def test_entropy_truly_empty_string():
+    from ml.feature_extractor import FeatureExtractor as FE
+
+    assert FE._shannon_entropy("") == 0.0
+
+
+def test_invalid_punycode_decode_does_not_crash():
+    # "xn--рaypal" cannot be ascii-encoded, so punycode decoding fails
+    # gracefully inside _has_homograph without raising.
+    features = extractor.extract("http://xn--\u0440aypal.example.com/")
+    assert features["has_punycode"] == 1
+    assert features["is_brand_spoofed"] == 0
+
+
+def test_raw_confusable_brand_lookalike_spoofed():
+    # Cyrillic "р" (er) maps to "p", so "раypal.com" normalizes to "paypal".
+    features = extractor.extract("http://\u0440aypal.com/login")
+    assert features["is_brand_spoofed"] == 1
+
+
+def test_confusable_present_but_not_brand_not_spoofed():
+    # Repeated Cyrillic "а" is confusable but matches no brand.
+    features = extractor.extract("http://\u0430\u0430\u0430\u0430\u0430.com/")
+    assert features["is_brand_spoofed"] == 0

@@ -180,3 +180,30 @@ def test_load_rejects_feature_name_mismatch(monkeypatch, tmp_path):
     monkeypatch.setattr(config.settings, "model_path", str(model_path))
     monkeypatch.setattr(config.settings, "feature_names_path", str(feature_names_path))
     assert PhishGuardPredictor().is_loaded is False
+
+
+# ─── Cache helpers ───────────────────────────────────────────────────────────
+
+
+def test_clear_cache(monkeypatch):
+    _install_stub(monkeypatch, phishing_proba=0.5)
+    p = PhishGuardPredictor()
+    p.predict("https://example.com/clear")
+    assert p._cache != {}
+    p.clear_cache()
+    assert p._cache == {}
+
+
+def test_predict_survives_shap_failure(monkeypatch):
+    """If the SHAP explainer fails, the prediction still succeeds (empty explanation)."""
+    _install_stub(monkeypatch, phishing_proba=0.9)
+    p = PhishGuardPredictor()
+
+    class BadExplainer:
+        def explain(self, feature_vector, top_n=5):
+            raise Exception("shap boom")
+
+    p._explainer = BadExplainer()
+    result = p.predict("https://example.com/explain-fail")
+    assert result["prediction"] == "PHISHING"
+    assert result["explanation"] == []

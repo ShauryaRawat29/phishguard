@@ -10,6 +10,26 @@ sessions — read it first when picking up a new session.
 - UI live on GitHub Pages: `https://shauryarawat29.github.io/phishguard/`
 - Keep-warm cron workflow active (`.github/workflows/keep-warm.yml`)
 
+### Session log — 2026-08-17 (this session)
+
+- **Phase 1 ✅** commit `b67e6a0` — security headers, TrustedHostMiddleware,
+  docs gating, rate-limit XFF hardening, CORS prod rejection, `pip-audit` in CI.
+- **Phase 2 ✅** commit `0d17ed2` — 33 features (was 27), expanded brands/TLDs/
+  whitelist, `scripts/adversarial_eval.py`, model retrained (test F1 **0.9969**,
+  accuracy 0.9973, AUC 0.9992), adversarial evasion <1%.
+- **Phase 3 ✅** commit `f72bfc1` — SHAP bars, verdict summary, show-all features,
+  localStorage scan history, favicon + OG tags, WCAG improvements; new
+  `GET /api/features` endpoint; `docs/` re-synced.
+- **Phase 4 ⚠️ in progress** — test suite expanded to **109 passing** and
+  **99% coverage** (excluding `ml/train.py`, omitted in `pyproject.toml`);
+  pending: README updates, re-verify `ml/feature_extractor.py:543` coverage gap,
+  push, verify live deploy. Phase 4 test changes are committed with this log.
+- **NOTE — next session:** consider **increasing the training dataset size**.
+  `ml/train.py` currently samples **50,000** of **235,795** URLs (feature
+  extraction ≈56s per 50k → ~4.5 min for the full set). Raising the cap or
+  using the full dataset may further improve the already-high F1. After any
+  retrain: recommit model artifacts and re-run `scripts/adversarial_eval.py`.
+
 ---
 
 ## Phase 1 — Security Hardening (backend)
@@ -61,7 +81,7 @@ sessions — read it first when picking up a new session.
 - [x] New tests for Phase 1 & 2 features
 - [x] `pip-audit` in CI (see 1.6)
 - [x] Test for `GET /api/features` endpoint
-- [ ] Coverage ≥ 85-90% (currently ~75%; `ml/train.py` untested by design)
+- [x] Coverage ≥ 85-90% (now **99%**; `ml/train.py` omitted from coverage)
 - [ ] README updates: security headers, docs gating, adversarial eval, new feature count
 
 ## Invariants

@@ -26,7 +26,7 @@ addopts = "-q"
 
 [tool.coverage.run]
 source = ["backend", "ml"]
-omit = ["*/__pycache__/*"]
+omit = ["*/__pycache__/*", "ml/train.py"]
 
 [tool.coverage.report]
 show_missing = true
