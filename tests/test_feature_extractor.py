@@ -241,3 +241,74 @@ def test_punycode_homograph_spoofed():
     # xn--80ak6aa92e decodes to a Cyrillic lookalike of "apple".
     features = extractor.extract("http://xn--80ak6aa92e.com/")
     assert features["is_brand_spoofed"] == 1
+
+
+# ─── Tests: 33-feature expansion ──────────────────────────────────────────────
+
+
+def test_has_punycode_true():
+    features = extractor.extract("http://xn--80ak6aa92e.com/")
+    assert features["has_punycode"] == 1
+
+
+def test_has_punycode_false(legitimate_url):
+    features = extractor.extract(legitimate_url)
+    assert features["has_punycode"] == 0
+
+
+def test_is_ipv6_true():
+    features = extractor.extract("https://[2001:db8::1]:8443/login")
+    assert features["is_ipv6"] == 1
+
+
+def test_is_ipv6_false_ipv4(ip_url):
+    features = extractor.extract(ip_url)
+    assert features["is_ipv6"] == 0
+
+
+def test_sld_length():
+    features = extractor.extract("https://github.com/user/repo")
+    assert features["sld_length"] == len("github")
+    features = extractor.extract("https://api.secure.paypal.com/login")
+    assert features["sld_length"] == len("paypal")
+
+
+def test_path_has_https_true():
+    features = extractor.extract("http://example.com/https-login-here")
+    assert features["path_has_https"] == 1
+
+
+def test_path_has_https_false(legitimate_url):
+    features = extractor.extract(legitimate_url)
+    assert features["path_has_https"] == 0
+
+
+def test_brand_in_path_true():
+    features = extractor.extract("https://evil.example.net/paypal/login")
+    assert features["brand_in_path"] == 1
+
+
+def test_brand_in_path_false(legitimate_url):
+    features = extractor.extract(legitimate_url)
+    assert features["brand_in_path"] == 0
+
+
+def test_domain_entropy_is_positive():
+    features = extractor.extract("https://randomxyzabc123456.example.com/")
+    assert features["domain_entropy"] > 3.0
+
+
+def test_feature_count_is_33():
+    assert len(FeatureExtractor.FEATURE_NAMES) == 33
+
+
+def test_new_brand_detected():
+    # "discord" is one of the newly added brands.
+    features = extractor.extract("http://discord-nitro-gift.tk/free")
+    assert features["is_brand_spoofed"] == 1
+
+
+def test_new_suspicious_tld_detected():
+    # "icu" is one of the newly added suspicious TLDs.
+    features = extractor.extract("http://free-gift.icu/login")
+    assert features["has_suspicious_tld"] == 1

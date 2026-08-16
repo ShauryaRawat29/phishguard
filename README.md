@@ -27,7 +27,7 @@
 ## What It Does
 
 1. You enter a URL into the web interface
-2. The system extracts 27 structural and lexical features from the URL
+2. The system extracts 33 structural and lexical features from the URL
 3. An XGBoost model classifies it as **PHISHING** or **LEGITIMATE**
 4. A risk score and confidence level are calculated
 5. SHAP values explain *which features* drove the prediction

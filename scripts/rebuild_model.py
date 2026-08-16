@@ -3,12 +3,14 @@ rebuild_model.py
 ================
 Obtain a usable PhishGuard model.
 
-The trained artifact (models/phishing_model.joblib) is NOT committed to git,
-so this script is the canonical way to get it:
+The trained artifact (models/phishing_model.joblib) IS committed to git so the
+Render Docker build always contains it. This script is the canonical way to
+(Re)build it:
 
 1. If a model already exists and `--force` is not passed, do nothing.
 2. Otherwise ensure the dataset is present (downloads via the Kaggle CLI if
-   available), then run the training pipeline (ml/train.py).
+   available), then run the training pipeline (ml/train.py). After retraining,
+   commit the regenerated models/*.joblib + models/*.json artifacts.
 
 Usage:
     python scripts/rebuild_model.py            # rebuild only if missing

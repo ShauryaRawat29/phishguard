@@ -4,7 +4,7 @@ train.py
 End-to-end model training script for PhishGuard.
 
 1. Loads raw dataset from data/phishing_urls.csv.
-2. Extracts 27 URL features using ml.feature_extractor.FeatureExtractor.
+2. Extracts 33 URL features using ml.feature_extractor.FeatureExtractor.
 3. Splits data into Train (70%), Validation (15%), and Test (15%) sets.
 4. Trains Logistic Regression, Random Forest, and XGBoost models.
 5. Evaluates model performance (Accuracy, Precision, Recall, F1-score, ROC-AUC).
@@ -56,7 +56,7 @@ def main():
         print("   Sampling 50,000 URLs for efficient training iteration...")
         df = df.sample(n=50000, random_state=42).reset_index(drop=True)
 
-    print(f"Extracting 27 features for {len(df)} URLs using FeatureExtractor...")
+    print(f"Extracting 33 features for {len(df)} URLs using FeatureExtractor...")
     extractor = FeatureExtractor()
     start_time = time.time()
 

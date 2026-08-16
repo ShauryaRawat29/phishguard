@@ -46,6 +46,13 @@ FEATURE_LABELS: dict[str, str] = {
     "num_special_chars": "Special characters in URL",
     "is_brand_spoofed": "Spoofed brand name detected in domain",
     "is_whitelisted_domain": "Known trusted legitimate domain",
+    # Added in the 33-feature expansion
+    "has_punycode": "Internationalized (punycode) domain",
+    "is_ipv6": "IPv6 address used as host",
+    "sld_length": "Second-level domain length",
+    "path_has_https": "HTTPS scheme embedded in path",
+    "brand_in_path": "Brand name in URL path",
+    "domain_entropy": "Domain randomness (entropy)",
 }
 
 

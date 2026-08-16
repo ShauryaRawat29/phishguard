@@ -25,5 +25,11 @@
   "path_token_count",
   "num_special_chars",
   "is_brand_spoofed",
-  "is_whitelisted_domain"
+  "is_whitelisted_domain",
+  "has_punycode",
+  "is_ipv6",
+  "sld_length",
+  "path_has_https",
+  "brand_in_path",
+  "domain_entropy"
 ]

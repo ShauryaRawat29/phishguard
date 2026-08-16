@@ -1,6 +1,6 @@
 ---
 name: feature-extractor
-description: Use when adding, modifying, or testing URL features in ml/feature_extractor.py, when retraining the model, or when the brand-spoofing/typosquatting/homograph logic is involved. Covers the 27-feature contract, FeatureExtractor.FEATURE_NAMES invariants, and the training/rebuild workflow.
+description: Use when adding, modifying, or testing URL features in ml/feature_extractor.py, when retraining the model, or when the brand-spoofing/typosquatting/homograph logic is involved. Covers the 33-feature contract, FeatureExtractor.FEATURE_NAMES invariants, and the training/rebuild workflow.
 ---
 
 # Feature Extractor & ML Pipeline
@@ -8,9 +8,9 @@ description: Use when adding, modifying, or testing URL features in ml/feature_e
 The URL feature extractor produces the model's input. Keep it deterministic,
 fast, and free of any network access.
 
-## The 27-feature contract
+## The 33-feature contract
 
-- `FeatureExtractor.FEATURE_NAMES` is the single source of truth: exactly **27**
+- `FeatureExtractor.FEATURE_NAMES` is the single source of truth: exactly **33**
   features, in a fixed order. Never call it "25" anywhere (docs, copy, comments).
 - `extract()` returns a dict; `extract_as_list()` returns values in
   `FEATURE_NAMES` order — always build vectors from `FEATURE_NAMES`, never from
@@ -57,4 +57,6 @@ are NOT spoofed.
 - Training samples to 50k URLs if the dataset is larger; label semantics in
   the raw CSV are `0 = phishing, 1 = legitimate` (train.py converts internally
   to `y=1` = phishing).
-- Model artifacts (`models/*.joblib`) are gitignored and rebuilt locally.
+- Model artifacts (`models/phishing_model.joblib`, `feature_names.json`,
+  `model_metadata.json`) are **committed to the repo** so Render's Docker build
+  always contains them. After changing features, retrain and recommit them.

@@ -1,7 +1,7 @@
 """
 feature_extractor.py
 ====================
-Extracts 27 structural and lexical features from a raw URL string.
+Extracts 33 structural and lexical features from a raw URL string.
 
 All features are computed from the URL string only — no network requests,
 no DNS lookups, no external API calls. This ensures fast, safe, offline inference.
@@ -62,6 +62,27 @@ SUSPICIOUS_TLDS: set[str] = {
     "buzz",
     "info",
     "biz",
+    # Free / heavily abused TLDs added in the 33-feature expansion
+    "icu",
+    "cyou",
+    "monster",
+    "rest",
+    "faith",
+    "gdn",
+    "pro",
+    "fit",
+    "kim",
+    "men",
+    "mom",
+    "party",
+    "review",
+    "surf",
+    "win",
+    "cfd",
+    "bond",
+    "racing",
+    "stream",
+    "download",
 }
 
 # ─── Phishing keyword vocabulary ─────────────────────────────────────────────
@@ -107,6 +128,22 @@ BRAND_DOMAINS: dict[str, str] = {
     "wellsfargo": "wellsfargo.com",
     "binance": "binance.com",
     "coinbase": "coinbase.com",
+    # Added in the 33-feature expansion (frequently phished brands)
+    "steam": "steamcommunity.com",
+    "discord": "discord.com",
+    "outlook": "outlook.com",
+    "icloud": "icloud.com",
+    "dropbox": "dropbox.com",
+    "telegram": "telegram.org",
+    "meta": "meta.com",
+    "whatsapp": "whatsapp.com",
+    "twitter": "twitter.com",
+    "linkedin": "linkedin.com",
+    "bankofamerica": "bankofamerica.com",
+    "citibank": "citibank.com",
+    "fidelity": "fidelity.com",
+    "robinhood": "robinhood.com",
+    "ebay": "ebay.com",
 }
 
 # ─── Top Legitimate Apex Domains ──────────────────────────────────────────────
@@ -135,6 +172,31 @@ TOP_LEGITIMATE_DOMAINS: set[str] = {
     "adobe.com",
     "wordpress.org",
     "cloudflare.com",
+    # Added in the 33-feature expansion
+    "stackoverflow.com",
+    "stackexchange.com",
+    "medium.com",
+    "quora.com",
+    "notion.so",
+    "canva.com",
+    "figma.com",
+    "salesforce.com",
+    "oracle.com",
+    "ibm.com",
+    "intel.com",
+    "nvidia.com",
+    "spotify.com",
+    "discord.com",
+    "slack.com",
+    "gitlab.com",
+    "bitbucket.org",
+    "mozilla.org",
+    "w3.org",
+    "python.org",
+    "npmjs.com",
+    "docker.com",
+    "kubernetes.io",
+    "telegram.org",
 }
 _IPV4_RE = re.compile(r"^(\d{1,3}\.){3}\d{1,3}$")
 
@@ -179,7 +241,7 @@ class FeatureExtractor:
     """
     Extracts a fixed-length feature vector from a URL string.
 
-    All 27 features are deterministic, fast, and require no external calls.
+    All 33 features are deterministic, fast, and require no external calls.
     The same extractor is used during both model training and live inference,
     ensuring consistent feature representation.
     """
@@ -213,11 +275,18 @@ class FeatureExtractor:
         "num_special_chars",
         "is_brand_spoofed",
         "is_whitelisted_domain",
+        # ── Added in the 33-feature expansion ────────────────────────────────
+        "has_punycode",
+        "is_ipv6",
+        "sld_length",
+        "path_has_https",
+        "brand_in_path",
+        "domain_entropy",
     ]
 
     def extract(self, url: str) -> dict[str, int | float]:
         """
-        Extract all 27 features from the given URL string.
+        Extract all 33 features from the given URL string.
 
         Args:
             url: A raw URL string (e.g. "example.com" or "https://example.com/login").
@@ -276,6 +345,13 @@ class FeatureExtractor:
             "num_special_chars": self._count_special_chars(full_url),
             "is_brand_spoofed": int(self._is_brand_spoofed(host)),
             "is_whitelisted_domain": int(self._is_whitelisted_domain(host)),
+            # ── Added in the 33-feature expansion ────────────────────────────
+            "has_punycode": int("xn--" in host),
+            "is_ipv6": int(netloc.count(":") > 1),
+            "sld_length": len(self._second_level_domain(host)),
+            "path_has_https": int("https" in path.lower()),
+            "brand_in_path": int(self._brand_in_path(path.lower())),
+            "domain_entropy": self._shannon_entropy(host),
         }
 
     def extract_as_list(self, url: str) -> list[int | float]:
@@ -415,6 +491,16 @@ class FeatureExtractor:
         """Return the second-level domain (e.g. 'paypal' from 'paypal.com')."""
         parts = host.split(".")
         return parts[-2] if len(parts) >= 2 else host
+
+    @staticmethod
+    def _brand_in_path(path_lower: str) -> bool:
+        """
+        Return True if a known brand name appears in the URL path.
+
+        Attackers often append a brand to the path (e.g. '/paypal/login') to
+        make a malicious URL look legitimate.
+        """
+        return any(brand in path_lower for brand in BRAND_DOMAINS)
 
     @staticmethod
     def _fuzzy_brand_match(text: str) -> bool:

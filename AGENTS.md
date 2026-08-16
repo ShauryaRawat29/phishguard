@@ -27,7 +27,7 @@ backend/
     validator.py     URL validation/sanitization (no network calls)
     predictor.py     Loads model once; predict() + SHAP + domain overrides
 ml/
-  feature_extractor.py  Extracts 27 deterministic URL features
+  feature_extractor.py  Extracts 33 deterministic URL features
   explainer.py          SHAP TreeExplainer wrapper
   train.py              End-to-end training + model serialization
 models/               Trained artifacts (phishing_model.joblib is committed for
@@ -69,7 +69,7 @@ python scripts/sync_docs.py --check    # CI: fail if docs/ is out of sync
 ## Conventions
 
 - Python 3.11+; type hints everywhere; `from __future__ import annotations`.
-- 27 features in `FeatureExtractor.FEATURE_NAMES` — never call it "25".
+- 33 features in `FeatureExtractor.FEATURE_NAMES` — never call it "25".
 - Use `backend.config.settings` for all configuration; never scatter `os.getenv`.
 - Errors: raise `URLValidationError` for input problems; HTTP errors are mapped
   once in the route; log the real exception, never leak internals to clients.

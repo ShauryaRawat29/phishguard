@@ -57,7 +57,7 @@ def analyze_url(
 
     The URL is:
     1. Validated for format and safety (no network requests made to it)
-    2. Passed through the feature extractor (27 URL-based features)
+    2. Passed through the feature extractor (33 URL-based features)
     3. Classified by the trained XGBoost model
     4. Explained using SHAP TreeExplainer values
 

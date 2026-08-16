@@ -30,16 +30,19 @@ sessions — read it first when picking up a new session.
 
 ## Phase 2 — ML / Detection (full retrain)
 
-- [ ] 2.1 Expand signal sets: more brands, suspicious TLDs, whitelisted apex domains
-- [ ] 2.2 Add ~6 new lexical features:
+- [x] 2.1 Expand signal sets: more brands, suspicious TLDs, whitelisted apex domains
+- [x] 2.2 Add ~6 new lexical features:
       `has_punycode`, `is_ipv6`, `sld_length`, `path_has_https`, `brand_in_path`,
       `domain_entropy`
   - This **intentionally breaks the 27-feature contract**. Update:
     `FEATURE_NAMES`, `FEATURE_LABELS`, tests, `AGENTS.md`, README, frontend copy.
-- [ ] 2.3 `scripts/adversarial_eval.py` — evasion-robustness measurement
+- [x] 2.3 `scripts/adversarial_eval.py` — evasion-robustness measurement
       (homoglyphs, hex encoding, token padding) vs. clean F1
-- [ ] 2.4 Retrain with `data/phishing_urls.csv`, re-verify SHAP, recommit model +
+- [x] 2.4 Retrain with `data/phishing_urls.csv`, re-verify SHAP, recommit model +
       `feature_names.json` + `model_metadata.json`
+  - Result: 33 features, test F1 **0.9969**, accuracy 0.9973, AUC 0.9992.
+  - Adversarial: evasion <1% for all perturbations; token-padding FP is
+    conservative-by-design (suspicious keyword in path flags the URL).
 - **Constraint:** NO network/DNS/WHOIS features (SSRF invariant).
 
 ## Phase 3 — Frontend Polish
