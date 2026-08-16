@@ -153,6 +153,21 @@ The service uses the repo's `Dockerfile` and the committed model at
 > inactivity; the first request after idle takes ~30-60s to respond (cold
 > start). This is fine for a demo/portfolio project.
 
+#### Keeping the free API warm (optional)
+
+To avoid cold starts, ping the service at least every 10 minutes. Two free
+options are included:
+
+- **Built-in:** `.github/workflows/keep-warm.yml` pings `/api/health` on a cron
+  schedule (every 10 minutes) using GitHub Actions — no extra account needed.
+- **UptimeRobot:** create a free HTTP(S) monitor for
+  `https://phishguard-api-dkoj.onrender.com/api/health` at a 5-minute interval.
+  UptimeRobot also emails you if the service goes down.
+
+Note: GitHub Actions only runs scheduled workflows for repos that have had
+activity in the last 60 days, so an UptimeRobot monitor is the more reliable
+long-term option for a dormant repo.
+
 ### UI — GitHub Pages (free)
 
 1. In your repo: **Settings → Pages → Source: GitHub Actions**.

@@ -1,0 +1,23 @@
+name: Keep Render Warm
+
+on:
+  schedule:
+    # Render's free tier sleeps after 15 minutes of inactivity; ping every
+    # 10 minutes so the API stays warm and responds instantly.
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping PhishGuard health endpoint
+        run: |
+          # --max-time allows for the cold start (~60s) when the service was asleep.
+          # --retry-connrefused retries once if the first attempt races the wake-up.
+          curl --silent --show-error --fail --max-time 120 \
+               --retry 3 --retry-delay 5 --retry-connrefused \
+               https://phishguard-api-dkoj.onrender.com/api/health
