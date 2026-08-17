@@ -19,6 +19,7 @@ from __future__ import annotations
 import json
 import os
 import threading
+import time
 from datetime import UTC, datetime
 from typing import Any
 
@@ -206,7 +207,17 @@ class PhishGuardPredictor:
         """Return a cached result dict for url (without mutating callers)."""
         with self._cache_lock:
             cached = self._cache.get(url)
-            return dict(cached) if cached else None
+            if cached is None:
+                return None
+            # Expire stale entries after `cache_ttl_seconds` (configurable via
+            # Settings) so predictions don't go stale forever.
+            age = time.monotonic() - cached.get("_cached_at", 0)
+            if age > settings.cache_ttl_seconds:
+                self._cache.pop(url, None)
+                return None
+            entry = dict(cached)
+            entry.pop("_cached_at", None)
+            return entry
 
     def _cache_put(self, url: str, result: dict) -> None:
         """Store a result, evicting the oldest entry when the cache is full."""
@@ -214,7 +225,9 @@ class PhishGuardPredictor:
             if len(self._cache) >= _CACHE_MAX_SIZE:
                 # FIFO eviction: drop the oldest inserted key.
                 self._cache.pop(next(iter(self._cache)), None)
-            self._cache[url] = dict(result)
+            entry = dict(result)
+            entry["_cached_at"] = time.monotonic()
+            self._cache[url] = entry
 
     def clear_cache(self) -> None:
         """Drop all cached predictions (used in tests / on demand)."""

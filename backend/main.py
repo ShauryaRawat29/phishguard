@@ -16,7 +16,10 @@ Then visit:
 
 from __future__ import annotations
 
+import json
 import logging
+import time as time_module
+import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -28,7 +31,12 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from backend.config import settings
-from backend.logging import get_logger, setup_logging
+from backend.logging import (
+    get_logger,
+    reset_request_id,
+    set_request_id,
+    setup_logging,
+)
 from backend.models.schemas import HealthResponse
 from backend.rate_limit import limiter
 from backend.routes.analyze import router as analyze_router
@@ -39,6 +47,23 @@ from backend.services.predictor import PhishGuardPredictor
 def _log_level(name: str) -> int:
     """Map a settings log-level string to a logging level."""
     return getattr(logging, name.upper(), logging.INFO)
+
+
+def _load_model_metadata() -> dict | None:
+    """
+    Load the training metadata written by ml/train.py (models/model_metadata.json).
+
+    Returns None when the file is missing or unreadable; never raises.
+    """
+    path = Path(settings.metadata_path)
+    if not path.is_file():
+        return None
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except Exception:
+        logger.exception("Failed to read model metadata at '%s'", path)
+        return None
 
 
 def _build_csp(docs_enabled: bool) -> str:
@@ -67,8 +92,9 @@ def _build_csp(docs_enabled: bool) -> str:
     return "; ".join(directives)
 
 
-setup_logging(level=_log_level(settings.log_level))
+setup_logging(level=_log_level(settings.log_level), log_format=settings.log_format)
 logger = get_logger(__name__)
+access_log = get_logger("backend.access")
 
 
 # ─── App Lifespan (startup / shutdown) ───────────────────────────────────────
@@ -83,6 +109,8 @@ async def lifespan(app: FastAPI):
     """
     logger.info("PhishGuard starting up...")
     app.state.predictor = PhishGuardPredictor()
+    app.state.started_at = time_module.monotonic()
+    app.state.model_metadata = _load_model_metadata()
     yield
     logger.info("PhishGuard shutting down.")
 
@@ -114,6 +142,56 @@ app.add_middleware(
     TrustedHostMiddleware,
     allowed_hosts=settings.trusted_host_list,
 )
+
+
+# ─── Middleware: Request-ID + Structured Access Log ───────────────────────────
+@app.middleware("http")
+async def request_id_and_access_log(request: Request, call_next):
+    """
+    Attach a request id to every request/response and emit a structured
+    access-log line.
+
+    The id is taken from an incoming `X-Request-ID` header (for trace
+    correlation across services) or generated as a short uuid. It is also
+    exposed to all loggers during the request via a context variable so
+    related log records share the id.
+    """
+    request_id = request.headers.get("X-Request-ID") or uuid.uuid4().hex[:12]
+    request.state.request_id = request_id
+    token = set_request_id(request_id)
+    start = time_module.perf_counter()
+    try:
+        response = await call_next(request)
+    except Exception:
+        access_log.exception(
+            "%s %s -> 500",
+            request.method,
+            request.url.path,
+            extra={"request_id": request_id, "method": request.method, "path": request.url.path},
+        )
+        raise
+    finally:
+        reset_request_id(token)
+
+    elapsed_ms = (time_module.perf_counter() - start) * 1000
+    response.headers["X-Request-ID"] = request_id
+    client = request.client.host if request.client else "-"
+    access_log.info(
+        "%s %s -> %s (%.1f ms)",
+        request.method,
+        request.url.path,
+        response.status_code,
+        elapsed_ms,
+        extra={
+            "request_id": request_id,
+            "method": request.method,
+            "path": request.url.path,
+            "status": response.status_code,
+            "latency_ms": round(elapsed_ms, 2),
+            "client": client,
+        },
+    )
+    return response
 
 
 # ─── Middleware: Security Headers ─────────────────────────────────────────────
@@ -173,7 +251,10 @@ app.include_router(features_router, prefix="/api", tags=["Features"])
     response_model=HealthResponse,
     tags=["Health"],
     summary="Health check",
-    description="Returns the service status and whether the ML model is loaded.",
+    description=(
+        "Returns the service status, whether the ML model is loaded, the "
+        "model's training metadata, and process uptime."
+    ),
 )
 async def health_check(request: Request) -> HealthResponse:
     """Check service health and model status."""
@@ -182,6 +263,9 @@ async def health_check(request: Request) -> HealthResponse:
         status="ok" if predictor.is_loaded else "degraded",
         model_loaded=predictor.is_loaded,
         version=app.version,
+        feature_count=len(predictor.feature_names),
+        uptime_seconds=round(time_module.monotonic() - app.state.started_at, 3),
+        model_metadata=app.state.model_metadata,
     )
 
 

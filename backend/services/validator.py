@@ -12,7 +12,7 @@ from __future__ import annotations
 from urllib.parse import urlparse
 
 # Schemes the server will accept
-ALLOWED_SCHEMES: set[str] = {"http", "https", "ftp"}
+ALLOWED_SCHEMES: set[str] = {"http", "https"}
 
 # Maximum URL length (matches IE/browser limit)
 MAX_URL_LENGTH: int = 2083
@@ -34,7 +34,7 @@ def validate_url(url: str) -> str:
     Checks performed:
     1. Not empty after stripping whitespace
     2. Does not exceed maximum length
-    3. Has an allowed scheme (http / https / ftp)
+    3. Has an allowed scheme (http / https)
     4. Has a non-empty netloc (domain or IP)
     5. Is not a file:// or data:// URI (security risk)
 
@@ -60,11 +60,19 @@ def validate_url(url: str) -> str:
     if url.lower().startswith(("file://", "data:", "javascript:", "vbscript:")):
         raise URLValidationError(
             code="INVALID_SCHEME",
-            message="Unsafe URI scheme. Only http, https, and ftp URLs are allowed.",
+            message="Unsafe URI scheme. Only http and https URLs are allowed.",
+        )
+
+    # ftp is no longer accepted (http/https only). Reject it before the
+    # auto-prepend step, which would otherwise mangle it into https://ftp://...
+    if url.lower().startswith("ftp://"):
+        raise URLValidationError(
+            code="INVALID_SCHEME",
+            message="Unsafe URI scheme. Only http and https URLs are allowed.",
         )
 
     # Auto-prepend https:// if user entered domain/path without scheme
-    if not url.startswith(("http://", "https://", "ftp://")):
+    if not url.startswith(("http://", "https://")):
         url = "https://" + url
 
     if len(url) > MAX_URL_LENGTH:
@@ -83,6 +91,12 @@ def validate_url(url: str) -> str:
             code="INVALID_URL",
             message="The provided input could not be parsed as a URL.",
         ) from None
+
+    if parsed.scheme.lower() not in ALLOWED_SCHEMES:
+        raise URLValidationError(
+            code="INVALID_SCHEME",
+            message="Unsafe URI scheme. Only http and https URLs are allowed.",
+        )
 
     if not parsed.netloc:
         raise URLValidationError(

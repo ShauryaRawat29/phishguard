@@ -48,6 +48,12 @@ sessions — read it first when picking up a new session.
   `www-` sandwich perturbators (evasion still <1% for all; host-shape
   perturbators remain conservative FP-prone by design). 8.4 (calibration)
   deferred as optional.
+- **Phase 9 ✅** — backend hardening: request-ID middleware + structured
+  JSON access logs (`LOG_FORMAT`, `X-Request-ID`, request-id correlation via
+  contextvar); cache TTL (`CACHE_TTL_SECONDS`) on the prediction cache;
+  validator now accepts `http`/`https` only (ftp dropped); richer
+  `/api/health` (feature count, uptime, model metadata); Docker runs as a
+  non-root user with a python-based `HEALTHCHECK`. Coverage back to 100%.
 
 ---
 
@@ -90,12 +96,12 @@ sessions — read it first when picking up a new session.
 
 ## Phase 9 — Backend Hardening & Observability
 
-- [ ] 9.1 Request-ID middleware + structured JSON logging (request id, latency,
+- [x] 9.1 Request-ID middleware + structured JSON logging (request id, latency,
       status).
-- [ ] 9.2 Cache TTL on the FIFO prediction cache (predictor.py).
-- [ ] 9.3 Validator: restrict to `http` / `https` only (drop `ftp`).
-- [ ] 9.4 Richer `/api/health`: model metadata, feature count, uptime.
-- [ ] 9.5 Docker: non-root user + `HEALTHCHECK`.
+- [x] 9.2 Cache TTL on the FIFO prediction cache (predictor.py).
+- [x] 9.3 Validator: restrict to `http` / `https` only (drop `ftp`).
+- [x] 9.4 Richer `/api/health`: model metadata, feature count, uptime.
+- [x] 9.5 Docker: non-root user + `HEALTHCHECK`.
 
 ## Phase 10 — CI/CD & Security
 

@@ -64,6 +64,22 @@ def test_data_uri_raises():
     assert exc.value.code == "INVALID_SCHEME"
 
 
+def test_ftp_scheme_rejected():
+    with pytest.raises(URLValidationError) as exc:
+        validate_url("ftp://ftp.example.com/file")
+    assert exc.value.code == "INVALID_SCHEME"
+
+
+def test_parsed_scheme_enforcement(monkeypatch):
+    """Post-parse scheme gate rejects schemes outside ALLOWED_SCHEMES."""
+    import backend.services.validator as validator
+
+    monkeypatch.setattr(validator, "ALLOWED_SCHEMES", {"https"})
+    with pytest.raises(URLValidationError) as exc:
+        validate_url("http://example.com")
+    assert exc.value.code == "INVALID_SCHEME"
+
+
 def test_url_too_long_raises():
     long_url = "https://example.com/" + "a" * 2100
     with pytest.raises(URLValidationError) as exc:

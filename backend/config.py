@@ -55,6 +55,8 @@ class Settings(BaseSettings):
     model_path: str = "models/phishing_model.joblib"
     feature_names_path: str = "models/feature_names.json"
     metadata_path: str = "models/model_metadata.json"
+    # Seconds a cached prediction stays fresh before it is re-computed.
+    cache_ttl_seconds: int = 300
 
     # ─── Deterministic overrides (post-model domain rules) ───
     # Trusted apex domain (whitelisted) → cap phishing probability at this value.
@@ -73,6 +75,8 @@ class Settings(BaseSettings):
 
     # ─── Logging ─────────────────────────────────────────────
     log_level: str = "INFO"
+    # "text" (human-readable) or "json" (structured, one object per line).
+    log_format: str = "text"
 
     @property
     def cors_origin_list(self) -> list[str]:

@@ -11,7 +11,7 @@ before they ever reach business logic.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -88,6 +88,12 @@ class HealthResponse(BaseModel):
     status: Literal["ok", "degraded"] = Field(description="Service status.")
     model_loaded: bool = Field(description="Whether the ML model is loaded and ready.")
     version: str = Field(description="Application version string.")
+    feature_count: int = Field(description="Number of URL features the model uses.")
+    uptime_seconds: float = Field(description="Seconds since the process started.")
+    model_metadata: dict[str, Any] | None = Field(
+        default=None,
+        description="Model training metadata (from models/model_metadata.json).",
+    )
 
 
 class ErrorResponse(BaseModel):

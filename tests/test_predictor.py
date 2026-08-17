@@ -123,6 +123,34 @@ def test_cache_is_capped(monkeypatch):
     assert len(p._cache) <= 512
 
 
+def test_cache_entries_expire_after_ttl(monkeypatch):
+    """Entries older than `cache_ttl_seconds` are evicted and re-computed."""
+    import backend.services.predictor as predictor_mod
+    from backend import config
+
+    model = _install_stub(monkeypatch, phishing_proba=0.9)
+    p = PhishGuardPredictor()
+
+    now = [1000.0]
+    monkeypatch.setattr(predictor_mod.time, "monotonic", lambda: now[0])
+    monkeypatch.setattr(config.settings, "cache_ttl_seconds", 300)
+
+    p.predict("https://example.com/ttl")
+    assert model.calls == 1
+
+    now[0] = 1299.0  # within TTL -> served from cache
+    p.predict("https://example.com/ttl")
+    assert model.calls == 1
+
+    now[0] = 1301.0  # past TTL -> re-inference
+    p.predict("https://example.com/ttl")
+    assert model.calls == 2
+
+    # The internal timestamp key never leaks into results.
+    result = p.predict("https://example.com/ttl")
+    assert "_cached_at" not in result
+
+
 # ─── Model not loaded ────────────────────────────────────────────────────────
 
 

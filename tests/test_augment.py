@@ -59,6 +59,11 @@ def test_brand_squat_urls_respects_per_brand_cap():
     assert len(urls) <= len(__import__("ml.augment", fromlist=["BRAND_DOMAINS"]).BRAND_DOMAINS)
 
 
+def test_brand_squat_urls_skips_brands_without_variants():
+    urls = brand_squat_urls(brands={"": "empty token"}, per_brand=5, seed=1)
+    assert urls == []
+
+
 def test_mutate_phishing_urls_expands_and_preserves_scheme():
     src = ["http://paypal-secure-login.xyz/account/verify"]
     mutated = mutate_phishing_urls(src, per_url=2, seed=1)
@@ -69,3 +74,10 @@ def test_mutate_phishing_urls_expands_and_preserves_scheme():
 
 def test_mutate_phishing_urls_empty_input():
     assert mutate_phishing_urls([], per_url=1, seed=1) == []
+
+
+def test_mutate_preserves_port_and_hits_homoglyph_branch():
+    # seed 7 rolls 0.32 -> the homoglyph substitution branch (0.30-0.55).
+    mutated = mutate_phishing_urls(["http://example.com:8080/secure"], per_url=1, seed=7)
+    assert ":8080" in mutated[0]
+    assert "://" in mutated[0]

@@ -52,6 +52,10 @@ def test_health_ok(client):
     assert body["status"] == "ok"
     assert body["model_loaded"] is True
     assert body["version"]
+    assert body["feature_count"] == 33
+    assert body["uptime_seconds"] >= 0
+    assert isinstance(body["model_metadata"], dict)
+    assert body["model_metadata"]["model_type"] == "XGBoost"
 
 
 def test_health_degraded_when_model_missing(monkeypatch):
@@ -64,6 +68,88 @@ def test_health_degraded_when_model_missing(monkeypatch):
     STATE["model_loaded"] = True
     assert resp.status_code == 200
     assert resp.json()["status"] == "degraded"
+
+
+# ─── Request-ID middleware ──────────────────────────────────────────────────
+
+
+def test_response_carries_generated_request_id(client):
+    resp = client.get("/api/health")
+    assert "X-Request-ID" in resp.headers
+    assert resp.headers["X-Request-ID"]
+
+
+def test_response_reflects_incoming_request_id(client):
+    resp = client.get("/api/health", headers={"X-Request-ID": "trace-123"})
+    assert resp.headers["X-Request-ID"] == "trace-123"
+
+
+def test_request_id_middleware_survives_errors(client):
+    from backend.main import app
+
+    class BoomPredictor:
+        is_loaded = True
+
+        def predict(self, url):
+            raise Exception("boom")
+
+    app.state.predictor = BoomPredictor()
+    resp = client.post("/api/analyze", json={"url": "https://example.com"})
+    assert resp.status_code == 500
+    assert "X-Request-ID" in resp.headers
+
+
+def test_request_id_middleware_handles_unhandled_exceptions():
+    """An unhandled exception is logged with the request id and re-raised."""
+    import asyncio
+
+    import pytest
+    from starlette.datastructures import Address, Headers
+    from starlette.requests import Request
+
+    from backend.main import request_id_and_access_log
+
+    scope = {
+        "type": "http",
+        "method": "GET",
+        "path": "/boom",
+        "raw_path": b"/boom",
+        "scheme": "http",
+        "server": ("testserver", 80),
+        "client": Address("1.2.3.4", 1234),
+        "headers": Headers({}).raw,
+        "query_string": b"",
+        "state": {},
+        "root_path": "",
+    }
+    request = Request(scope)
+
+    async def boom_call_next(request):
+        raise RuntimeError("boom")
+
+    with pytest.raises(RuntimeError):
+        asyncio.run(request_id_and_access_log(request, boom_call_next))
+
+
+# ─── Model metadata loading ────────────────────────────────────────────────
+
+
+def test_load_model_metadata_missing_file_returns_none(monkeypatch, tmp_path):
+    from backend import config
+    from backend.main import _load_model_metadata
+
+    monkeypatch.setattr(config.settings, "metadata_path", str(tmp_path / "missing.json"))
+    assert _load_model_metadata() is None
+
+
+def test_load_model_metadata_unreadable_returns_none(monkeypatch, tmp_path):
+    import backend.main as main_mod
+    from backend import config
+
+    bad = tmp_path / "metadata.json"
+    bad.write_text("{not valid json")
+    monkeypatch.setattr(config.settings, "metadata_path", str(bad))
+    assert main_mod._load_model_metadata() is None
 
 
 # ─── POST /api/analyze ───────────────────────────────────────────────────────

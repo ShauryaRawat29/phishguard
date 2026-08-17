@@ -149,7 +149,8 @@ PhishGuard ships with free-tier deployment config for both halves of the app:
    limiting sees real client IPs behind the proxy.
 
 The service uses the repo's `Dockerfile` and the committed model at
-`models/phishing_model.joblib`. A health check runs against `/api/health`.
+`models/phishing_model.joblib`. The image runs as a non-root user and
+includes a `HEALTHCHECK` against `/api/health`.
 
 > Note: Render's free tier spins the service down after 15 minutes of
 > inactivity; the first request after idle takes ~30-60s to respond (cold
