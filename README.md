@@ -18,8 +18,10 @@
 
 ## Quick Links
 
-- 🌐 **Live Demo:** *[Coming soon](https://github.com/ShauryaRawat29/phishguard)*
-- 📖 **API Docs:** Interactive Swagger UI at `/docs` once the API is deployed (locally: `http://localhost:8000/docs`)
+- 🌐 **Live UI:** [shauryarawat29.github.io/phishguard](https://shauryarawat29.github.io/phishguard)
+- 🛰️ **Live API:** `https://phishguard-api-dkoj.onrender.com` (health: `/api/health`)
+- 📖 **API Docs:** Interactive Swagger UI at `/docs` (enabled by default locally at
+  `http://localhost:8000/docs`; gated off in production via `DOCS_ENABLED`)
 - 📓 **ML Notebook:** `notebooks/phishing_detection.ipynb`
 
 ---
@@ -187,9 +189,30 @@ point the GitHub Pages `CORS_ORIGINS` at your Pages URL.
 - The server **never** makes network requests to the URLs it analyzes — all
   feature extraction is lexical/structural, preventing SSRF.
 - Rate limiting is applied per-IP on `POST /api/analyze`
-  (`RATE_LIMIT_PER_MINUTE`). Behind a proxy set `TRUST_PROXY_HEADERS=true`.
-- HTTP responses carry hardened security headers.
+  (`RATE_LIMIT_PER_MINUTE`). Behind a proxy set `TRUST_PROXY_HEADERS=true` and
+  list your proxy in `TRUSTED_PROXY_IPS` so `X-Forwarded-For` cannot be spoofed
+  by clients.
+- Allowed Host headers are enforced with `TrustedHostMiddleware`
+  (`TRUSTED_HOSTS`), preventing DNS-rebinding style header poisoning.
+- HTTP responses carry hardened security headers:
+  - `Strict-Transport-Security` (HSTS, over HTTPS only; `HSTS_ENABLED`)
+  - `Content-Security-Policy` (self + Google Fonts + jsdelivr for the Pages UI;
+    `frame-ancestors 'none'`)
+  - `Cache-Control: no-store` and `Cross-Origin-Resource-Policy: same-origin`
+    on API responses
+- Interactive API docs (`/docs`, `/redoc`, `/openapi.json`) are disabled in
+  production (`DOCS_ENABLED=false`) to hide the API surface.
+- CORS rejects wildcard `*` origins in production (`CORS_ORIGINS`).
 - Unsafe URI schemes (`file://`, `data:`, `javascript:`) are rejected.
+- `pip-audit` runs in CI to catch vulnerable dependencies.
+
+### Adversarial robustness
+
+`scripts/adversarial_eval.py` measures how well the model resists common
+evasion tricks — homoglyphs, hex encoding, and token padding. Against the
+retrained 33-feature model, evasion succeeds in **<1%** of adversarial samples
+while clean F1 stays at **0.9969**. Token-padding false positives are
+conservative-by-design: a suspicious keyword in the path flags the URL.
 
 ---
 

@@ -350,6 +350,13 @@ def test_raw_confusable_brand_lookalike_spoofed():
     assert features["is_brand_spoofed"] == 1
 
 
+def test_fully_cyrillic_homograph_spoofed():
+    # All-Cyrillic "аррӏе.com" normalizes to "apple"; the sld yields no ASCII
+    # token (so fuzzy typosquat misses), forcing the homograph path to fire.
+    features = extractor.extract("http://\u0430\u0440\u0440\u04cf\u0435.com/login")
+    assert features["is_brand_spoofed"] == 1
+
+
 def test_confusable_present_but_not_brand_not_spoofed():
     # Repeated Cyrillic "а" is confusable but matches no brand.
     features = extractor.extract("http://\u0430\u0430\u0430\u0430\u0430.com/")

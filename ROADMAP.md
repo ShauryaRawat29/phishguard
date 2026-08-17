@@ -20,10 +20,11 @@ sessions — read it first when picking up a new session.
 - **Phase 3 ✅** commit `f72bfc1` — SHAP bars, verdict summary, show-all features,
   localStorage scan history, favicon + OG tags, WCAG improvements; new
   `GET /api/features` endpoint; `docs/` re-synced.
-- **Phase 4 ⚠️ in progress** — test suite expanded to **109 passing** and
-  **99% coverage** (excluding `ml/train.py`, omitted in `pyproject.toml`);
-  pending: README updates, re-verify `ml/feature_extractor.py:543` coverage gap,
-  push, verify live deploy. Phase 4 test changes are committed with this log.
+- **Phase 4 ✅** — test suite at **116 passing**, **100% coverage** (excluding
+  `ml/train.py`, omitted in `pyproject.toml`); closed the last
+  `feature_extractor.py:543` homograph gap and `is_trusted_proxy` edge cases;
+  README updated (live links, security headers, docs gating, adversarial
+  robustness).
 - **NOTE — next session:** consider **increasing the training dataset size**.
   `ml/train.py` currently samples **50,000** of **235,795** URLs (feature
   extraction ≈56s per 50k → ~4.5 min for the full set). Raising the cap or
@@ -81,8 +82,8 @@ sessions — read it first when picking up a new session.
 - [x] New tests for Phase 1 & 2 features
 - [x] `pip-audit` in CI (see 1.6)
 - [x] Test for `GET /api/features` endpoint
-- [x] Coverage ≥ 85-90% (now **99%**; `ml/train.py` omitted from coverage)
-- [ ] README updates: security headers, docs gating, adversarial eval, new feature count
+- [x] Coverage ≥ 85-90% (now **100%**; `ml/train.py` omitted from coverage)
+- [x] README updates: security headers, docs gating, adversarial eval, new feature count
 
 ## Invariants
 
