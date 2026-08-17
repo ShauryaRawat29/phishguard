@@ -66,7 +66,7 @@
         <span class="badge-dot"></span>
         Open-Source &nbsp;·&nbsp; ML-Powered URL Analysis
       </div>
-      <h1 class="hero-title" id="hero-title">
+      <h1 class="hero-title glitch" id="hero-title" data-text="Detect Phishing URLs Before They Detect You">
         Detect Phishing URLs<br/>
         <span class="accent-text">Before They Detect You</span>
       </h1>
@@ -78,7 +78,7 @@
 
     <!-- ── Analyzer Card ──────────────────────────────────────── -->
     <section class="analyzer-section" aria-label="URL Analyzer">
-      <div class="card analyzer-card">
+      <div class="card analyzer-card" data-tilt>
 
         <!-- Input Form -->
         <form class="url-form" id="url-form" novalidate autocomplete="off">
@@ -218,98 +218,106 @@
       </div>
     </section>
 
+    <!-- ── Product Mockup ─────────────────────────────────────── -->
+    <section class="mockup-section" aria-label="Preview of a completed scan">
+      <div class="mockup" data-tilt role="img" aria-label="Preview of a PhishGuard scan result">
+        <div class="mockup-bar">
+          <span class="mockup-dots" aria-hidden="true">
+            <span class="mockup-dot"></span>
+            <span class="mockup-dot"></span>
+            <span class="mockup-dot"></span>
+          </span>
+          <span class="mockup-url">https://paypa1-secure-login.xyz/account/verify?token=abc123</span>
+        </div>
+        <div class="mockup-body">
+          <div class="mockup-verdict">
+            <div class="mockup-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7.4-6.3-4.5-6.3 4.5L8 14 2 9.4h7.6z"/>
+              </svg>
+            </div>
+            <div class="mockup-verdict-info">
+              <div class="mockup-label">PHISHING</div>
+              <div class="mockup-domain">paypa1-secure-login.xyz</div>
+            </div>
+            <span class="mockup-risk">HIGH RISK</span>
+          </div>
+          <div class="mockup-meter">
+            <span class="mockup-meter-label">Phishing confidence</span>
+            <span class="mockup-meter-value">94%</span>
+          </div>
+          <div class="mockup-meter-bar"><span class="mockup-meter-fill"></span></div>
+          <div class="mockup-factors" aria-hidden="true">
+            <span class="mockup-factor">Brand spoofing</span>
+            <span class="mockup-factor">Suspicious TLD</span>
+            <span class="mockup-factor">High entropy</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- ── How It Works Section ───────────────────────────────── -->
     <section class="how-it-works" id="how-it-works" aria-labelledby="how-title">
       <p class="section-kicker">The Pipeline</p>
       <h2 class="section-title" id="how-title">How It Works</h2>
-      <div class="steps-grid">
-        <div class="step-card">
-          <div class="step-number" aria-hidden="true">01</div>
-          <div class="step-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/>
-              <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>
-            </svg>
-          </div>
-          <p class="step-tag">Input</p>
-          <h3 class="step-title">Enter a URL</h3>
-          <p class="step-desc">Paste any URL you want to verify. PhishGuard only ever sees the string itself — it never visits the target.</p>
-          <ul class="step-list">
-            <li>Auto-prepends <code>https://</code> when missing</li>
-            <li>Rejects <code>file:</code>, <code>data:</code>, <code>javascript:</code> schemes</li>
-            <li>Zero network requests — no SSRF risk</li>
-          </ul>
-        </div>
-        <div class="step-card">
-          <div class="step-number" aria-hidden="true">02</div>
-          <div class="step-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="4" y1="21" x2="4" y2="14"/>
-              <line x1="4" y1="10" x2="4" y2="3"/>
-              <line x1="12" y1="21" x2="12" y2="12"/>
-              <line x1="12" y1="8" x2="12" y2="3"/>
-              <line x1="20" y1="21" x2="20" y2="16"/>
-              <line x1="20" y1="12" x2="20" y2="3"/>
-              <line x1="1" y1="14" x2="7" y2="14"/>
-              <line x1="9" y1="8" x2="15" y2="8"/>
-              <line x1="17" y1="16" x2="23" y2="16"/>
-            </svg>
-          </div>
-          <p class="step-tag">Extract</p>
-          <h3 class="step-title">Feature Extraction</h3>
-          <p class="step-desc">33 deterministic features are pulled straight from the URL string and grouped into four signal families.</p>
-          <ul class="step-list">
-            <li>Structural: length, dots, subdomains, path tokens</li>
-            <li>Lexical: suspicious keywords, TLDs, encoding tricks</li>
-            <li>Reputation: brand-spoof, typosquat, IP-as-host</li>
-            <li>Randomness: URL &amp; domain entropy</li>
-          </ul>
-        </div>
-        <div class="step-card">
-          <div class="step-number" aria-hidden="true">03</div>
-          <div class="step-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="4" y="4" width="16" height="16" rx="2"/>
-              <rect x="9" y="9" width="6" height="6"/>
-              <line x1="9" y1="2" x2="9" y2="4"/>
-              <line x1="15" y1="2" x2="15" y2="4"/>
-              <line x1="9" y1="20" x2="9" y2="22"/>
-              <line x1="15" y1="20" x2="15" y2="22"/>
-              <line x1="2" y1="9" x2="4" y2="9"/>
-              <line x1="2" y1="15" x2="4" y2="15"/>
-              <line x1="20" y1="9" x2="22" y2="9"/>
-              <line x1="20" y1="15" x2="22" y2="15"/>
-            </svg>
-          </div>
-          <p class="step-tag">Classify</p>
-          <h3 class="step-title">ML Classification</h3>
-          <p class="step-desc">An XGBoost model predicts the phishing probability, then an isotonic calibrator turns it into an honest confidence score.</p>
-          <ul class="step-list">
-            <li>Trained on 468,783 labeled URLs</li>
-            <li>Test F1 0.9973 &middot; AUC 0.9994</li>
-            <li>Deterministic brand / whitelist overrides</li>
-          </ul>
-        </div>
-        <div class="step-card">
-          <div class="step-number" aria-hidden="true">04</div>
-          <div class="step-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7.4-6.3-4.5-6.3 4.5L8 14 2 9.4h7.6z"/>
-            </svg>
-          </div>
-          <p class="step-tag">Explain</p>
-          <h3 class="step-title">Explainable Result</h3>
-          <p class="step-desc">SHAP values trace which features pushed the score toward phishing or legitimate — so you know why, not just what.</p>
-          <ul class="step-list">
-            <li>Top contributing factors, ranked</li>
-            <li>Risk level: low &middot; medium &middot; high</li>
-            <li>Full 33-feature vector on demand</li>
-          </ul>
-        </div>
-      </div>
+      <p class="section-sub">
+        Four stages, one pass. PhishGuard analyzes the URL string alone — no page
+        visits, no DNS lookups, no network calls of any kind.
+      </p>
 
-      <!-- ── Stats Strip ──────────────────────────────────────── -->
-      <div class="stats-strip" role="list" aria-label="Model performance">
+      <ol class="stages">
+        <li class="stage">
+          <div class="stage-num" aria-hidden="true">01</div>
+          <div class="stage-body">
+            <p class="stage-tag">Input</p>
+            <h3 class="stage-title">Enter a URL</h3>
+            <p class="stage-desc">
+              Paste any URL. Missing <code>https://</code> is added, unsafe schemes such as
+              <code>file:</code> or <code>javascript:</code> are rejected, and the string is
+              normalized into a canonical form ready for analysis.
+            </p>
+          </div>
+        </li>
+        <li class="stage">
+          <div class="stage-num" aria-hidden="true">02</div>
+          <div class="stage-body">
+            <p class="stage-tag">Extract</p>
+            <h3 class="stage-title">Feature Extraction</h3>
+            <p class="stage-desc">
+              33 deterministic features are pulled straight from the URL string. Length and
+              structure, suspicious keywords and TLDs, brand-spoofing and typosquatting,
+              raw IP hosts, encoding tricks, and the entropy of the URL and its domain.
+            </p>
+          </div>
+        </li>
+        <li class="stage">
+          <div class="stage-num" aria-hidden="true">03</div>
+          <div class="stage-body">
+            <p class="stage-tag">Classify</p>
+            <h3 class="stage-title">ML Classification</h3>
+            <p class="stage-desc">
+              An XGBoost model trained on 468,783 labeled URLs predicts the phishing
+              probability. An isotonic calibrator then converts that raw score into an honest
+              confidence, and deterministic brand / whitelist overrides are applied.
+            </p>
+          </div>
+        </li>
+        <li class="stage">
+          <div class="stage-num" aria-hidden="true">04</div>
+          <div class="stage-body">
+            <p class="stage-tag">Explain</p>
+            <h3 class="stage-title">Explainable Result</h3>
+            <p class="stage-desc">
+              SHAP values trace which features pushed the verdict toward phishing or
+              legitimate, ranked by impact — so you understand exactly why the decision
+              was made, not just what the answer is.
+            </p>
+          </div>
+        </li>
+      </ol>
+
+      <!-- ── Stats ────────────────────────────────────────────── -->
+      <div class="stats" role="list" aria-label="Model performance">
         <div class="stat" role="listitem">
           <div class="stat-value">33</div>
           <div class="stat-label">Features extracted</div>
@@ -332,40 +340,24 @@
       <div class="inspect-section">
         <p class="section-kicker">Under the Hood</p>
         <h3 class="inspect-title">What PhishGuard inspects</h3>
-        <div class="inspect-grid">
-          <div class="inspect-card">
-            <h4>URL Structure</h4>
-            <ul>
-              <li>Length, dot &amp; slash density</li>
-              <li>Subdomains, ports, path tokens</li>
-              <li>Digits &amp; special characters</li>
-            </ul>
+        <dl class="inspect-rows">
+          <div class="inspect-row">
+            <dt>URL Structure</dt>
+            <dd>Length, dot and slash density, subdomains, ports, path tokens, digits and special characters.</dd>
           </div>
-          <div class="inspect-card">
-            <h4>Domain Reputation</h4>
-            <ul>
-              <li>Trusted apex-domain whitelist</li>
-              <li>Brand-spoofing &amp; typosquatting</li>
-              <li>Raw IP hosts, IPv6, punycode</li>
-            </ul>
+          <div class="inspect-row">
+            <dt>Domain Reputation</dt>
+            <dd>Trusted apex-domain whitelist, brand-spoofing and typosquatting, raw IP hosts, IPv6 and punycode.</dd>
           </div>
-          <div class="inspect-card">
-            <h4>Lexical Signals</h4>
-            <ul>
-              <li>Suspicious keywords &amp; TLDs</li>
-              <li>URL shorteners &amp; redirection</li>
-              <li>Percent / hex encoding tricks</li>
-            </ul>
+          <div class="inspect-row">
+            <dt>Lexical Signals</dt>
+            <dd>Suspicious keywords and TLDs, URL shorteners, percent and hex encoding tricks.</dd>
           </div>
-          <div class="inspect-card">
-            <h4>Obfuscation</h4>
-            <ul>
-              <li>High URL &amp; domain entropy</li>
-              <li><code>https</code> faked inside the path</li>
-              <li>Abnormal character patterns</li>
-            </ul>
+          <div class="inspect-row">
+            <dt>Obfuscation</dt>
+            <dd>High URL and domain entropy, <code>https</code> faked inside the path, abnormal character patterns.</dd>
           </div>
-        </div>
+        </dl>
       </div>
     </section>
 
