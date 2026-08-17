@@ -26,5 +26,5 @@ python-dotenv>=1.0.0
 slowapi>=0.1.9
 
 # ─── Visualization (for notebooks / docs) ─────────────────
-matplotlib>=3.8.0
+matplotlib>=3.11.1
 seaborn>=0.13.0
