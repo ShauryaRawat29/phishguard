@@ -54,6 +54,11 @@ sessions — read it first when picking up a new session.
   validator now accepts `http`/`https` only (ftp dropped); richer
   `/api/health` (feature count, uptime, model metadata); Docker runs as a
   non-root user with a python-based `HEALTHCHECK`. Coverage back to 100%.
+- **Phase 10 ✅** — CI/CD & security: test matrix widened to Python
+  3.11–3.14; coverage gate `--cov-fail-under=95`; new Docker-build job
+  (build + health smoke test); Dependabot config for pip + GitHub Actions;
+  `SECURITY.md` with a private vulnerability-reporting process; README
+  security notes updated.
 
 ---
 
@@ -105,11 +110,11 @@ sessions — read it first when picking up a new session.
 
 ## Phase 10 — CI/CD & Security
 
-- [ ] 10.1 CI matrix: add Python 3.13 / 3.14.
-- [ ] 10.2 Coverage gate: `--cov-fail-under=95` in CI.
-- [ ] 10.3 Docker-build job in CI.
-- [ ] 10.4 Dependabot config + `SECURITY.md`.
-- [ ] 10.5 Tests for new behaviors; docs updates.
+- [x] 10.1 CI matrix: add Python 3.13 / 3.14.
+- [x] 10.2 Coverage gate: `--cov-fail-under=95` in CI.
+- [x] 10.3 Docker-build job in CI.
+- [x] 10.4 Dependabot config + `SECURITY.md`.
+- [x] 10.5 Tests for new behaviors; docs updates.
 
 ## Phase 11 — Frontend & DX (dev-only JS tooling)
 

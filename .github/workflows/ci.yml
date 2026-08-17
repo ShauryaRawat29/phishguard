@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.11", "3.12"]
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
 
     steps:
       - uses: actions/checkout@v4
@@ -33,10 +33,32 @@ jobs:
         run: ruff format --check .
 
       - name: Run tests with coverage
-        run: pytest --cov=backend --cov=ml --cov-report=term-missing
+        run: pytest --cov=backend --cov=ml --cov-report=term-missing --cov-fail-under=95
 
       - name: Verify docs/ mirror is in sync
         run: python scripts/sync_docs.py --check
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t phishguard:ci .
+
+      - name: Smoke-test container (health endpoint)
+        run: |
+          docker run -d --name phishguard-ci -p 8000:8000 phishguard:ci
+          for i in $(seq 1 60); do
+            if curl --silent --fail http://127.0.0.1:8000/api/health >/dev/null 2>&1; then
+              echo "health endpoint OK"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "container did not become healthy in time; logs:"
+          docker logs phishguard-ci
+          exit 1
 
   dependency-scan:
     runs-on: ubuntu-latest

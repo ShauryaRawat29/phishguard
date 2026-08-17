@@ -205,7 +205,10 @@ point the GitHub Pages `CORS_ORIGINS` at your Pages URL.
   production (`DOCS_ENABLED=false`) to hide the API surface.
 - CORS rejects wildcard `*` origins in production (`CORS_ORIGINS`).
 - Unsafe URI schemes (`file://`, `data:`, `javascript:`) are rejected.
-- `pip-audit` runs in CI to catch vulnerable dependencies.
+- `pip-audit` runs in CI to catch vulnerable dependencies; Dependabot keeps
+  Python and GitHub Actions dependencies updated automatically.
+- Security vulnerabilities are handled privately via GitHub Security
+  Advisories — see [`SECURITY.md`](SECURITY.md).
 
 ### Adversarial robustness
 
