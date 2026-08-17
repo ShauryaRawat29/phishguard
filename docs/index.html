@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="green">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PhishGuard — AI Phishing URL Detector</title>
   <meta name="description" content="PhishGuard analyzes URLs using machine learning to detect phishing attempts and explain exactly why a URL is suspicious." />
-  <meta name="theme-color" content="#0a0908" />
+  <meta name="theme-color" content="#0a120b" />
   <meta name="color-scheme" content="dark" />
 
   <!-- Open Graph / social sharing -->
@@ -21,7 +21,7 @@
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -29,349 +29,348 @@
   <!-- Skip link for keyboard/screen-reader users (see .skip-link in style.css) -->
   <a class="skip-link" href="#main">Skip to content</a>
 
-  <!-- ── Header ──────────────────────────────────────────────── -->
-  <header class="site-header">
-    <div class="header-inner">
-      <div class="logo">
-        <svg class="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <path d="M12 2L3 7V13C3 17.97 7.02 22.67 12 24C16.98 22.67 21 17.97 21 13V7L12 2Z" fill="url(#shieldGrad)"/>
-          <path d="M9 12L11 14L15 10" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          <defs>
-            <linearGradient id="shieldGrad" x1="3" y1="2" x2="21" y2="24" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stop-color="#fdba74"/>
-              <stop offset="100%" stop-color="#e8792f"/>
-            </linearGradient>
-          </defs>
-        </svg>
-        <span class="logo-text">PhishGuard</span>
-      </div>
-      <nav class="header-nav" aria-label="Primary navigation">
-        <a href="#how-it-works" class="nav-link">How it works</a>
-        <a href="https://github.com/ShauryaRawat29/phishguard" target="_blank" rel="noopener noreferrer" class="nav-link nav-link--github" id="github-link">
-          <svg viewBox="0 0 24 24" fill="currentColor" class="icon-github" aria-hidden="true">
-            <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.342-3.369-1.342-.454-1.155-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/>
-          </svg>
-          GitHub
-        </a>
-      </nav>
-    </div>
-  </header>
+  <!-- CRT screen effects -->
+  <div class="crt-overlay" id="crt-overlay" aria-hidden="true"></div>
+  <div class="crt-vignette" aria-hidden="true"></div>
+  <canvas class="matrix-rain" id="matrix-rain" aria-hidden="true" hidden></canvas>
 
-  <!-- ── Main Content ────────────────────────────────────────── -->
   <main class="main-content" id="main">
 
-    <!-- Hero Section -->
-    <section class="hero" aria-labelledby="hero-title">
-      <div class="hero-badge">
-        <span class="badge-dot"></span>
-        Open-Source &nbsp;·&nbsp; ML-Powered URL Analysis
-      </div>
-      <h1 class="hero-title glitch" id="hero-title" data-text="Detect Phishing URLs Before They Detect You">
-        Detect Phishing URLs<br/>
-        <span class="accent-text">Before They Detect You</span>
-      </h1>
-      <p class="hero-subtitle">
-        Enter any URL below. PhishGuard's machine learning model analyzes 33 structural
-        and lexical features to classify it as legitimate or phishing — with a full explanation.
-      </p>
-    </section>
+    <!-- ══ Terminal Window ═══════════════════════════════════ -->
+    <div class="terminal">
 
-    <!-- ── Analyzer Card ──────────────────────────────────────── -->
-    <section class="analyzer-section" aria-label="URL Analyzer">
-      <div class="card analyzer-card" data-tilt>
+      <!-- ── Title Bar ──────────────────────────────────────── -->
+      <header class="titlebar">
+        <div class="titlebar-left">
+          <div class="traffic-lights" aria-hidden="true">
+            <span class="traffic-light traffic-light--red" id="win-close" title="Reset"></span>
+            <span class="traffic-light traffic-light--yellow" id="win-min" title="Toggle compact"></span>
+            <span class="traffic-light traffic-light--green" id="win-max" title="Full width"></span>
+          </div>
+          <div class="titlebar-path" aria-label="Current session">
+            <span class="path-user">guest</span>@<span class="path-host">phishguard</span>:<span class="path-cwd">~/scanner</span>
+            <span class="path-branch">main*</span>
+          </div>
+        </div>
 
-        <!-- Input Form -->
-        <form class="url-form" id="url-form" novalidate autocomplete="off">
-          <label for="url-input" class="input-label">Enter a URL to analyze</label>
-
-          <div class="input-group" id="input-group">
-            <div class="input-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/>
-                <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>
-              </svg>
-            </div>
-            <input
-              type="url"
-              id="url-input"
-              class="url-input"
-              placeholder="https://example.com/page"
-              aria-label="URL to analyze"
-              aria-describedby="url-error"
-              spellcheck="false"
-              autocorrect="off"
-              autocapitalize="none"
-            />
-            <button type="submit" class="analyze-btn" id="analyze-btn" aria-label="Analyze URL">
-              <span class="btn-text">Analyze</span>
-              <svg class="btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
-              </svg>
-            </button>
+        <div class="titlebar-controls">
+          <div class="mode-tabs" role="tablist" aria-label="Display mode">
+            <button id="tab-scanner" class="mode-tab active" role="tab" aria-selected="true" type="button">&gt;_ SCANNER</button>
+            <button id="tab-pipeline" class="mode-tab" role="tab" aria-selected="false" type="button">[#] PIPELINE</button>
           </div>
 
-          <p class="input-error" id="url-error" role="alert" aria-live="polite" hidden></p>
-        </form>
+          <label class="theme-picker">
+            <span class="theme-picker-label">THEME</span>
+            <select id="theme-select" aria-label="Select color theme">
+              <option value="green">🟢 Phosphor Green</option>
+              <option value="amber">🟠 Amber Monitor</option>
+              <option value="cyan">🔵 Cyber Cyan</option>
+              <option value="dracula">🟣 Dracula Synth</option>
+              <option value="mono">⚪ Retro Mono</option>
+            </select>
+          </label>
 
-        <!-- Sample URLs -->
-        <div class="sample-urls" id="sample-urls">
-          <span class="sample-label">Try an example:</span>
-          <button class="sample-pill" id="sample-legit" data-url="https://github.com/python/cpython" type="button">
-            ✓ Legitimate
+          <button id="toggle-crt-btn" class="titlebar-btn" type="button" aria-label="Toggle CRT effect">
+            <span class="titlebar-btn-dot" id="crt-indicator"></span> CRT
           </button>
-          <button class="sample-pill sample-pill--phishing" id="sample-phish" data-url="http://paypa1-secure-login.xyz/account/verify?token=abc123" type="button">
-            ✗ Phishing
+          <button id="toggle-sfx-btn" class="titlebar-btn" type="button" aria-label="Toggle sound effects">
+            <span id="sfx-icon">🔊</span><span id="sfx-status">SFX</span>
           </button>
+          <button id="trigger-matrix-btn" class="titlebar-btn titlebar-btn--accent" type="button">⚡ MATRIX</button>
+          <a href="https://github.com/ShauryaRawat29/phishguard" target="_blank" rel="noopener noreferrer" class="titlebar-btn titlebar-btn--link" id="github-link">[ GitHub ]</a>
         </div>
+      </header>
 
-        <!-- Divider -->
-        <div class="card-divider" id="result-divider" hidden></div>
+      <!-- ── Terminal Body ──────────────────────────────────── -->
+      <div class="terminal-body">
 
-        <!-- ── Loading State ─────────────────────────────────── -->
-        <div class="loading-state" id="loading-state" hidden aria-live="polite" aria-label="Analyzing URL">
-          <div class="spinner" aria-hidden="true">
-            <div class="spinner-ring"></div>
-            <div class="spinner-ring spinner-ring--inner"></div>
-          </div>
-          <p class="loading-text">Analyzing URL features...</p>
-          <div class="loading-steps" id="loading-steps" aria-hidden="true">
-            <span class="loading-step active" id="step-1">Extracting features</span>
-            <span class="loading-step" id="step-2">Running model</span>
-            <span class="loading-step" id="step-3">Generating explanation</span>
-          </div>
-        </div>
+        <!-- ── Scanner View ─────────────────────────────────── -->
+        <section id="view-scanner" class="view view--scanner">
 
-        <!-- ── Result State ───────────────────────────────────── -->
-        <div class="result-state" id="result-state" hidden>
-
-          <!-- Verdict Banner -->
-          <div class="verdict-banner" id="verdict-banner" role="status" aria-live="polite">
-            <div class="verdict-icon" id="verdict-icon" aria-hidden="true"></div>
-            <div class="verdict-info">
-              <div class="verdict-label" id="verdict-label">PHISHING</div>
-              <div class="verdict-url" id="verdict-url"></div>
+          <!-- Boot Banner -->
+          <div class="boot-banner" aria-label="PhishGuard terminal banner">
+            <pre class="ascii-logo" aria-hidden="true">
+  ____  _     _     _   _   _    ____  ____  _   _    _    ____  ____   ____
+ / ___|| |__ (_)___| |_| | | |  / ___||  _ \| | | |  / \  |  _ \|  _ \ / ___|
+ \___ \| '_ \| / __| __| | | | | |  _ | |_) | | | | / _ \ | |_) | | | | |  _
+  ___) | | | | \__ \ |_| |_| | | |_| ||  _ <| |_| |/ ___ \|  _ <| |_| | |_| |
+ |____/|_| |_|_|___/\__|\___/   \____||_| \_\\___//_/   \_\_| \_\____/ \____|</pre>
+            <div class="boot-line">PHISHGUARD SECURITY TERMINAL v2.0 (x86_64)</div>
+            <div class="boot-line boot-line--dim">
+              Type or paste a URL below and press <span class="key">[ENTER]</span> to run a scan.
             </div>
-            <div class="verdict-risk" id="verdict-risk">
-              <span class="risk-badge" id="risk-badge">HIGH</span>
+            <div class="boot-chips">
+              <span class="boot-chip">33 FEATURES</span>
+              <span class="boot-chip">XGBOOST</span>
+              <span class="boot-chip">SHAP EXPLAINABLE</span>
+              <span class="boot-chip">NO NETWORK CALLS</span>
             </div>
           </div>
 
-          <!-- Confidence Meter -->
-          <div class="confidence-section">
-            <div class="confidence-header">
-              <span class="confidence-label">Phishing Confidence</span>
-              <span class="confidence-value" id="confidence-value">94%</span>
+          <!-- Analyzer -->
+          <div class="card analyzer-card">
+
+            <!-- Input Form -->
+            <form class="url-form" id="url-form" novalidate autocomplete="off">
+              <label for="url-input" class="input-label">TARGET URL</label>
+
+              <div class="terminal-input-row">
+                <span class="prompt-label" aria-hidden="true">phishguard:~$</span>
+                <div class="input-group" id="input-group">
+                  <input
+                    type="text"
+                    id="url-input"
+                    class="url-input"
+                    placeholder="https://example.com/page"
+                    aria-label="URL to analyze"
+                    aria-describedby="url-error"
+                    spellcheck="false"
+                    autocorrect="off"
+                    autocapitalize="none"
+                  />
+                  <button type="submit" class="analyze-btn" id="analyze-btn" aria-label="Analyze URL">
+                    <span class="btn-text">SCAN</span>
+                    <span class="btn-arrow" aria-hidden="true">➤</span>
+                  </button>
+                </div>
+              </div>
+
+              <p class="input-error" id="url-error" role="alert" aria-live="polite" hidden></p>
+            </form>
+
+            <!-- Sample URLs -->
+            <div class="sample-urls" id="sample-urls">
+              <span class="sample-label">QUICK TEST:</span>
+              <button class="sample-pill" id="sample-legit" data-url="https://github.com/python/cpython" type="button">[+] legit</button>
+              <button class="sample-pill sample-pill--phishing" id="sample-phish" data-url="http://paypa1-secure-login.xyz/account/verify?token=abc123" type="button">[!] phishing</button>
             </div>
-            <div class="confidence-bar" role="progressbar" aria-label="Confidence level" id="confidence-bar-wrapper">
-              <div class="confidence-fill" id="confidence-fill"></div>
+
+            <!-- Divider -->
+            <div class="card-divider" id="result-divider" hidden aria-hidden="true">──────────</div>
+
+            <!-- ── Loading State ─────────────────────────────── -->
+            <div class="loading-state" id="loading-state" hidden aria-live="polite" aria-label="Analyzing URL">
+              <div class="loading-bar" aria-hidden="true">
+                <span class="loading-bar-fill"></span>
+              </div>
+              <p class="loading-text" id="loading-text">RUNNING ANALYSIS...</p>
+              <div class="loading-steps" id="loading-steps" aria-hidden="true">
+                <span class="loading-step active" id="step-1">EXTRACTING FEATURES</span>
+                <span class="loading-step" id="step-2">RUNNING MODEL</span>
+                <span class="loading-step" id="step-3">GENERATING EXPLANATION</span>
+              </div>
+            </div>
+
+            <!-- ── Result State ──────────────────────────────── -->
+            <div class="result-state" id="result-state" hidden>
+
+              <!-- Verdict Banner -->
+              <div class="verdict-banner" id="verdict-banner" role="status" aria-live="polite">
+                <div class="verdict-icon" id="verdict-icon" aria-hidden="true"></div>
+                <div class="verdict-info">
+                  <div class="verdict-label" id="verdict-label">PHISHING</div>
+                  <div class="verdict-url" id="verdict-url"></div>
+                </div>
+                <div class="verdict-risk">
+                  <span class="risk-badge" id="risk-badge">HIGH</span>
+                </div>
+              </div>
+
+              <!-- Confidence Meter -->
+              <div class="confidence-section">
+                <div class="confidence-header">
+                  <span class="confidence-label">PHISHING CONFIDENCE</span>
+                  <span class="confidence-value" id="confidence-value">--%</span>
+                </div>
+                <div class="confidence-bar" role="progressbar" aria-label="Confidence level" id="confidence-bar-wrapper">
+                  <div class="confidence-fill" id="confidence-fill"></div>
+                </div>
+              </div>
+
+              <!-- Verdict Summary -->
+              <p class="verdict-summary" id="verdict-summary" role="status" aria-live="polite"></p>
+
+              <!-- Explanation -->
+              <div class="explanation-section" id="explanation-section">
+                <h2 class="explanation-title">// KEY FACTORS</h2>
+                <ul class="explanation-list" id="explanation-list" aria-label="Prediction factors"></ul>
+
+                <button class="show-all-btn" id="show-all-btn" type="button" aria-expanded="false" aria-controls="all-features-grid">
+                  <span class="show-all-label">SHOW ALL FEATURES</span>
+                  <span class="show-all-chevron" aria-hidden="true">▾</span>
+                </button>
+                <div class="all-features-grid" id="all-features-grid" hidden></div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="result-actions">
+                <button class="action-btn action-btn--primary" id="analyze-another-btn" type="button">ANALYZE ANOTHER URL</button>
+                <button class="action-btn action-btn--secondary" id="copy-result-btn" type="button" aria-label="Copy result to clipboard">[ COPY RESULT ]</button>
+              </div>
+            </div>
+
+            <!-- ── Error State ───────────────────────────────── -->
+            <div class="error-state" id="error-state" hidden role="alert" aria-live="assertive">
+              <div class="error-icon" aria-hidden="true">✖</div>
+              <p class="error-message" id="error-message">An error occurred.</p>
+              <button class="action-btn action-btn--primary action-btn--inline" id="retry-btn" type="button">TRY AGAIN</button>
+            </div>
+
+            <!-- ── Recent Scans ──────────────────────────────── -->
+            <div class="history-section" id="history-section" hidden>
+              <div class="history-header">
+                <h2 class="history-title">// RECENT SCANS</h2>
+                <button class="history-clear" id="history-clear-btn" type="button">CLEAR HISTORY</button>
+              </div>
+              <ul class="history-list" id="history-list"></ul>
+            </div>
+
+          </div>
+
+          <!-- Terminal-style footer note -->
+          <div class="terminal-hint">
+            <span class="terminal-hint-prompt" aria-hidden="true">guest@phishguard:~$</span>
+            <span class="terminal-hint-text">hint: urls are never visited — analysis is purely lexical.</span>
+          </div>
+        </section>
+
+        <!-- ── Pipeline View (Dashboard) ────────────────────── -->
+        <section id="view-pipeline" class="view view--pipeline" hidden>
+
+          <div class="pipeline-head">
+            <p class="section-kicker">// THE PIPELINE</p>
+            <h2 class="section-title">How It Works</h2>
+            <p class="section-sub">
+              Four stages, one pass. PhishGuard analyzes the URL string alone — no page
+              visits, no DNS lookups, no network calls of any kind.
+            </p>
+          </div>
+
+          <ol class="stages">
+            <li class="stage">
+              <div class="stage-num" aria-hidden="true">01</div>
+              <div class="stage-body">
+                <p class="stage-tag">INPUT</p>
+                <h3 class="stage-title">Enter a URL</h3>
+                <p class="stage-desc">
+                  Paste any URL. Missing <code>https://</code> is added, unsafe schemes such as
+                  <code>file:</code> or <code>javascript:</code> are rejected, and the string is
+                  normalized into a canonical form ready for analysis.
+                </p>
+              </div>
+            </li>
+            <li class="stage">
+              <div class="stage-num" aria-hidden="true">02</div>
+              <div class="stage-body">
+                <p class="stage-tag">EXTRACT</p>
+                <h3 class="stage-title">Feature Extraction</h3>
+                <p class="stage-desc">
+                  33 deterministic features are pulled straight from the URL string. Length and
+                  structure, suspicious keywords and TLDs, brand-spoofing and typosquatting,
+                  raw IP hosts, encoding tricks, and the entropy of the URL and its domain.
+                </p>
+              </div>
+            </li>
+            <li class="stage">
+              <div class="stage-num" aria-hidden="true">03</div>
+              <div class="stage-body">
+                <p class="stage-tag">CLASSIFY</p>
+                <h3 class="stage-title">ML Classification</h3>
+                <p class="stage-desc">
+                  An XGBoost model trained on 468,783 labeled URLs predicts the phishing
+                  probability. An isotonic calibrator then converts that raw score into an honest
+                  confidence, and deterministic brand / whitelist overrides are applied.
+                </p>
+              </div>
+            </li>
+            <li class="stage">
+              <div class="stage-num" aria-hidden="true">04</div>
+              <div class="stage-body">
+                <p class="stage-tag">EXPLAIN</p>
+                <h3 class="stage-title">Explainable Result</h3>
+                <p class="stage-desc">
+                  SHAP values trace which features pushed the verdict toward phishing or
+                  legitimate, ranked by impact — so you understand exactly why the decision
+                  was made, not just what the answer is.
+                </p>
+              </div>
+            </li>
+          </ol>
+
+          <!-- ── Stats ───────────────────────────────────────── -->
+          <div class="stats" role="list" aria-label="Model performance">
+            <div class="stat" role="listitem">
+              <div class="stat-value">33</div>
+              <div class="stat-label">FEATURES EXTRACTED</div>
+            </div>
+            <div class="stat" role="listitem">
+              <div class="stat-value">468,783</div>
+              <div class="stat-label">LABELED TRAINING URLS</div>
+            </div>
+            <div class="stat" role="listitem">
+              <div class="stat-value">0.9973</div>
+              <div class="stat-label">TEST-SET F1 SCORE</div>
+            </div>
+            <div class="stat" role="listitem">
+              <div class="stat-value">&lt;1%</div>
+              <div class="stat-label">ADVERSARIAL EVASION</div>
             </div>
           </div>
 
-          <!-- Verdict Summary -->
-          <p class="verdict-summary" id="verdict-summary" role="status" aria-live="polite"></p>
-
-          <!-- Explanation -->
-          <div class="explanation-section" id="explanation-section">
-            <h2 class="explanation-title">Key Factors</h2>
-            <ul class="explanation-list" id="explanation-list" aria-label="Prediction factors"></ul>
-
-            <button class="show-all-btn" id="show-all-btn" type="button" aria-expanded="false" aria-controls="all-features-grid">
-              <span class="show-all-label">Show all features</span>
-              <svg class="show-all-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M6 9l6 6 6-6"/>
-              </svg>
-            </button>
-            <div class="all-features-grid" id="all-features-grid" hidden></div>
+          <!-- ── What It Inspects ────────────────────────────── -->
+          <div class="inspect-section">
+            <p class="section-kicker">// UNDER THE HOOD</p>
+            <h3 class="inspect-title">What PhishGuard inspects</h3>
+            <dl class="inspect-rows">
+              <div class="inspect-row">
+                <dt>URL STRUCTURE</dt>
+                <dd>Length, dot and slash density, subdomains, ports, path tokens, digits and special characters.</dd>
+              </div>
+              <div class="inspect-row">
+                <dt>DOMAIN REPUTATION</dt>
+                <dd>Trusted apex-domain whitelist, brand-spoofing and typosquatting, raw IP hosts, IPv6 and punycode.</dd>
+              </div>
+              <div class="inspect-row">
+                <dt>LEXICAL SIGNALS</dt>
+                <dd>Suspicious keywords and TLDs, URL shorteners, percent and hex encoding tricks.</dd>
+              </div>
+              <div class="inspect-row">
+                <dt>OBFUSCATION</dt>
+                <dd>High URL and domain entropy, <code>https</code> faked inside the path, abnormal character patterns.</dd>
+              </div>
+            </dl>
           </div>
 
-          <!-- Action Buttons -->
-          <div class="result-actions">
-            <button class="action-btn action-btn--primary" id="analyze-another-btn" type="button">
-              Analyze Another URL
-            </button>
-            <button class="action-btn action-btn--secondary" id="copy-result-btn" type="button" aria-label="Copy result to clipboard">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="icon-copy">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
-              </svg>
-              Copy Result
-            </button>
-          </div>
-        </div>
-
-        <!-- ── Error State ────────────────────────────────────── -->
-        <div class="error-state" id="error-state" hidden role="alert" aria-live="assertive">
-          <div class="error-icon" aria-hidden="true">⚠</div>
-          <p class="error-message" id="error-message">An error occurred.</p>
-          <button class="action-btn action-btn--primary" id="retry-btn" type="button">Try Again</button>
-        </div>
-
-        <!-- ── Recent Scans ──────────────────────────────────── -->
-        <div class="history-section" id="history-section" hidden>
-          <div class="history-header">
-            <h2 class="history-title">Recent Scans</h2>
-            <button class="history-clear" id="history-clear-btn" type="button">Clear history</button>
-          </div>
-          <ul class="history-list" id="history-list"></ul>
-        </div>
-
+        </section>
       </div>
-    </section>
 
-    <!-- ── Product Mockup ─────────────────────────────────────── -->
-    <section class="mockup-section" aria-label="Preview of a completed scan">
-      <div class="mockup" data-tilt role="img" aria-label="Preview of a PhishGuard scan result">
-        <div class="mockup-bar">
-          <span class="mockup-dots" aria-hidden="true">
-            <span class="mockup-dot"></span>
-            <span class="mockup-dot"></span>
-            <span class="mockup-dot"></span>
+      <!-- ── Status Bar ─────────────────────────────────────── -->
+      <footer class="statusbar">
+        <div class="statusbar-left">
+          <span class="status-ok">
+            <span class="status-dot" aria-hidden="true"></span> STATUS 200 OK
           </span>
-          <span class="mockup-url">https://paypa1-secure-login.xyz/account/verify?token=abc123</span>
+          <span class="statusbar-item statusbar-item--hide-sm">UTF-8</span>
+          <span class="statusbar-item statusbar-item--hide-md">MODE: <span id="mode-status-text">SCANNER</span></span>
         </div>
-        <div class="mockup-body">
-          <div class="mockup-verdict">
-            <div class="mockup-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7.4-6.3-4.5-6.3 4.5L8 14 2 9.4h7.6z"/>
-              </svg>
-            </div>
-            <div class="mockup-verdict-info">
-              <div class="mockup-label">PHISHING</div>
-              <div class="mockup-domain">paypa1-secure-login.xyz</div>
-            </div>
-            <span class="mockup-risk">HIGH RISK</span>
-          </div>
-          <div class="mockup-meter">
-            <span class="mockup-meter-label">Phishing confidence</span>
-            <span class="mockup-meter-value">94%</span>
-          </div>
-          <div class="mockup-meter-bar"><span class="mockup-meter-fill"></span></div>
-          <div class="mockup-factors" aria-hidden="true">
-            <span class="mockup-factor">Brand spoofing</span>
-            <span class="mockup-factor">Suspicious TLD</span>
-            <span class="mockup-factor">High entropy</span>
-          </div>
+        <div class="statusbar-right">
+          <span id="live-clock" class="statusbar-clock">00:00:00 LOCAL</span>
+          <span class="statusbar-version">PHISHGUARD v2.0</span>
         </div>
-      </div>
-    </section>
+      </footer>
+    </div>
 
-    <!-- ── How It Works Section ───────────────────────────────── -->
-    <section class="how-it-works" id="how-it-works" aria-labelledby="how-title">
-      <p class="section-kicker">The Pipeline</p>
-      <h2 class="section-title" id="how-title">How It Works</h2>
-      <p class="section-sub">
-        Four stages, one pass. PhishGuard analyzes the URL string alone — no page
-        visits, no DNS lookups, no network calls of any kind.
+    <!-- ── Site Footer ──────────────────────────────────────── -->
+    <footer class="site-footer">
+      <p>
+        PhishGuard — B.Tech Minor Project &nbsp;·&nbsp;
+        Built with <a href="https://fastapi.tiangolo.com" target="_blank" rel="noopener noreferrer">FastAPI</a>,
+        <a href="https://xgboost.readthedocs.io" target="_blank" rel="noopener noreferrer">XGBoost</a> &amp;
+        <a href="https://shap.readthedocs.io" target="_blank" rel="noopener noreferrer">SHAP</a>
       </p>
-
-      <ol class="stages">
-        <li class="stage">
-          <div class="stage-num" aria-hidden="true">01</div>
-          <div class="stage-body">
-            <p class="stage-tag">Input</p>
-            <h3 class="stage-title">Enter a URL</h3>
-            <p class="stage-desc">
-              Paste any URL. Missing <code>https://</code> is added, unsafe schemes such as
-              <code>file:</code> or <code>javascript:</code> are rejected, and the string is
-              normalized into a canonical form ready for analysis.
-            </p>
-          </div>
-        </li>
-        <li class="stage">
-          <div class="stage-num" aria-hidden="true">02</div>
-          <div class="stage-body">
-            <p class="stage-tag">Extract</p>
-            <h3 class="stage-title">Feature Extraction</h3>
-            <p class="stage-desc">
-              33 deterministic features are pulled straight from the URL string. Length and
-              structure, suspicious keywords and TLDs, brand-spoofing and typosquatting,
-              raw IP hosts, encoding tricks, and the entropy of the URL and its domain.
-            </p>
-          </div>
-        </li>
-        <li class="stage">
-          <div class="stage-num" aria-hidden="true">03</div>
-          <div class="stage-body">
-            <p class="stage-tag">Classify</p>
-            <h3 class="stage-title">ML Classification</h3>
-            <p class="stage-desc">
-              An XGBoost model trained on 468,783 labeled URLs predicts the phishing
-              probability. An isotonic calibrator then converts that raw score into an honest
-              confidence, and deterministic brand / whitelist overrides are applied.
-            </p>
-          </div>
-        </li>
-        <li class="stage">
-          <div class="stage-num" aria-hidden="true">04</div>
-          <div class="stage-body">
-            <p class="stage-tag">Explain</p>
-            <h3 class="stage-title">Explainable Result</h3>
-            <p class="stage-desc">
-              SHAP values trace which features pushed the verdict toward phishing or
-              legitimate, ranked by impact — so you understand exactly why the decision
-              was made, not just what the answer is.
-            </p>
-          </div>
-        </li>
-      </ol>
-
-      <!-- ── Stats ────────────────────────────────────────────── -->
-      <div class="stats" role="list" aria-label="Model performance">
-        <div class="stat" role="listitem">
-          <div class="stat-value">33</div>
-          <div class="stat-label">Features extracted</div>
-        </div>
-        <div class="stat" role="listitem">
-          <div class="stat-value">468,783</div>
-          <div class="stat-label">Labeled training URLs</div>
-        </div>
-        <div class="stat" role="listitem">
-          <div class="stat-value">0.9973</div>
-          <div class="stat-label">Test-set F1 score</div>
-        </div>
-        <div class="stat" role="listitem">
-          <div class="stat-value">&lt;1%</div>
-          <div class="stat-label">Adversarial evasion</div>
-        </div>
-      </div>
-
-      <!-- ── What It Inspects ─────────────────────────────────── -->
-      <div class="inspect-section">
-        <p class="section-kicker">Under the Hood</p>
-        <h3 class="inspect-title">What PhishGuard inspects</h3>
-        <dl class="inspect-rows">
-          <div class="inspect-row">
-            <dt>URL Structure</dt>
-            <dd>Length, dot and slash density, subdomains, ports, path tokens, digits and special characters.</dd>
-          </div>
-          <div class="inspect-row">
-            <dt>Domain Reputation</dt>
-            <dd>Trusted apex-domain whitelist, brand-spoofing and typosquatting, raw IP hosts, IPv6 and punycode.</dd>
-          </div>
-          <div class="inspect-row">
-            <dt>Lexical Signals</dt>
-            <dd>Suspicious keywords and TLDs, URL shorteners, percent and hex encoding tricks.</dd>
-          </div>
-          <div class="inspect-row">
-            <dt>Obfuscation</dt>
-            <dd>High URL and domain entropy, <code>https</code> faked inside the path, abnormal character patterns.</dd>
-          </div>
-        </dl>
-      </div>
-    </section>
+    </footer>
 
   </main>
-
-  <!-- ── Footer ──────────────────────────────────────────────── -->
-  <footer class="site-footer">
-    <p>
-      PhishGuard — B.Tech Minor Project &nbsp;·&nbsp;
-      Built with <a href="https://fastapi.tiangolo.com" target="_blank" rel="noopener noreferrer">FastAPI</a>,
-      <a href="https://xgboost.readthedocs.io" target="_blank" rel="noopener noreferrer">XGBoost</a> &amp;
-      <a href="https://shap.readthedocs.io" target="_blank" rel="noopener noreferrer">SHAP</a>
-    </p>
-  </footer>
 
   <script type="module" src="app.js"></script>
 </body>

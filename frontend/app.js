@@ -1,5 +1,7 @@
 /* ==========================================================================
    PhishGuard — Frontend Application Logic
+   Retro TUI terminal chrome: themes, CRT toggle, SFX, matrix rain, clock,
+   view switching, plus the URL analyzer.
    ========================================================================== */
 
 import {
@@ -18,7 +20,15 @@ const API_BASE_URL = window.location.hostname === 'localhost' || window.location
   ? 'http://localhost:8000'
   : (window.PHISHGUARD_API_URL || 'https://phishguard-api-dkoj.onrender.com');
 
-// DOM Elements
+// Storage keys
+const HISTORY_KEY = 'phishguard.history';
+const THEME_KEY = 'phishguard.theme';
+const CRT_KEY = 'phishguard.crt';
+const SFX_KEY = 'phishguard.sfx';
+const HISTORY_MAX = 8;
+const LOADING_STEP_INTERVAL_MS = 1200;
+
+// DOM Elements — analyzer
 const form = document.getElementById('url-form');
 const input = document.getElementById('url-input');
 const inputError = document.getElementById('url-error');
@@ -61,14 +71,208 @@ const loadingSteps = [
   document.getElementById('step-3'),
 ];
 
+// DOM Elements — terminal chrome
+const themeSelect = document.getElementById('theme-select');
+const toggleCrtBtn = document.getElementById('toggle-crt-btn');
+const crtIndicator = document.getElementById('crt-indicator');
+const toggleSfxBtn = document.getElementById('toggle-sfx-btn');
+const sfxIcon = document.getElementById('sfx-icon');
+const sfxStatus = document.getElementById('sfx-status');
+const triggerMatrixBtn = document.getElementById('trigger-matrix-btn');
+const tabScanner = document.getElementById('tab-scanner');
+const tabPipeline = document.getElementById('tab-pipeline');
+const viewScanner = document.getElementById('view-scanner');
+const viewPipeline = document.getElementById('view-pipeline');
+const modeStatusText = document.getElementById('mode-status-text');
+const liveClock = document.getElementById('live-clock');
+const matrixRain = document.getElementById('matrix-rain');
+
 let currentAnalysisResult = null;
 let featureLabels = null;
 let loadingStepTimer = null;
-const HISTORY_KEY = 'phishguard.history';
-const HISTORY_MAX = 8;
-const LOADING_STEP_INTERVAL_MS = 1200;
 
-// Event Listeners
+// ── Theme switching ───────────────────────────────────────────────────────
+
+function applyTheme(id) {
+  document.documentElement.dataset.theme = id;
+  localStorage.setItem(THEME_KEY, id);
+}
+
+function initTheme() {
+  const saved = localStorage.getItem(THEME_KEY) || 'green';
+  applyTheme(saved);
+  themeSelect.value = saved;
+}
+
+themeSelect.addEventListener('change', () => {
+  applyTheme(themeSelect.value);
+  beep(600, 0.05);
+});
+
+// ── CRT toggle ────────────────────────────────────────────────────────────
+
+let crtEnabled = localStorage.getItem(CRT_KEY) !== 'off';
+
+function applyCRT() {
+  document.documentElement.style.setProperty('--scanline-opacity', crtEnabled ? '0.15' : '0');
+  document.documentElement.style.setProperty('--vignette-opacity', crtEnabled ? '0.65' : '0');
+  document.body.classList.toggle('crt-on', crtEnabled);
+  document.body.classList.toggle('crt-off', !crtEnabled);
+  crtIndicator.classList.toggle('muted', !crtEnabled);
+}
+
+toggleCrtBtn.addEventListener('click', () => {
+  crtEnabled = !crtEnabled;
+  localStorage.setItem(CRT_KEY, crtEnabled ? 'on' : 'off');
+  applyCRT();
+  beep(450, 0.04);
+});
+
+// ── SFX (Web Audio keypress clicks / chimes) ──────────────────────────────
+
+let sfxEnabled = localStorage.getItem(SFX_KEY) !== 'off';
+let audioCtx = null;
+
+function ensureAudioCtx() {
+  if (!audioCtx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) audioCtx = new AC();
+  }
+  return audioCtx;
+}
+
+function beep(freq, dur, type = 'square', gain = 0.03) {
+  if (!sfxEnabled) return;
+  const ctx = ensureAudioCtx();
+  if (!ctx) return;
+  if (ctx.state === 'suspended') ctx.resume();
+  const osc = ctx.createOscillator();
+  const amp = ctx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  amp.gain.setValueAtTime(gain, ctx.currentTime);
+  amp.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
+  osc.connect(amp);
+  amp.connect(ctx.destination);
+  osc.start();
+  osc.stop(ctx.currentTime + dur);
+}
+
+function playKey() {
+  beep(660, 0.02, 'square', 0.015);
+}
+
+function playSuccess() {
+  beep(880, 0.08);
+  window.setTimeout(() => beep(1320, 0.1), 90);
+}
+
+function playError() {
+  beep(240, 0.14, 'sawtooth', 0.05);
+}
+
+function updateSfxUI() {
+  sfxIcon.textContent = sfxEnabled ? '🔊' : '🔇';
+  sfxStatus.textContent = sfxEnabled ? 'SFX' : 'MUTED';
+}
+
+toggleSfxBtn.addEventListener('click', () => {
+  sfxEnabled = !sfxEnabled;
+  localStorage.setItem(SFX_KEY, sfxEnabled ? 'on' : 'off');
+  updateSfxUI();
+  if (sfxEnabled) playSuccess();
+});
+
+// ── Live clock ────────────────────────────────────────────────────────────
+
+function updateClock() {
+  liveClock.textContent = `${new Date().toLocaleTimeString()} LOCAL`;
+}
+
+// ── Matrix rain ───────────────────────────────────────────────────────────
+
+let matrixActive = false;
+let matrixRaf = null;
+
+function startMatrix() {
+  matrixRain.hidden = false;
+  const ctx = matrixRain.getContext('2d');
+  const font = 14;
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*<>/\\|{}=+-_';
+  let cols = 0;
+  let drops = [];
+
+  function resize() {
+    matrixRain.width = window.innerWidth;
+    matrixRain.height = window.innerHeight;
+    cols = Math.floor(window.innerWidth / font);
+    drops = new Array(cols).fill(1);
+  }
+
+  resize();
+  window.addEventListener('resize', resize);
+
+  const accent = window.getComputedStyle(document.documentElement)
+    .getPropertyValue('--accent').trim() || '#00ff66';
+
+  function draw() {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.06)';
+    ctx.fillRect(0, 0, matrixRain.width, matrixRain.height);
+    ctx.font = `${font}px monospace`;
+    for (let i = 0; i < cols; i += 1) {
+      const ch = chars[Math.floor(Math.random() * chars.length)];
+      ctx.fillStyle = accent;
+      ctx.fillText(ch, i * font, drops[i] * font);
+      if (drops[i] * font > matrixRain.height && Math.random() > 0.975) drops[i] = 0;
+      drops[i] += 1;
+    }
+    matrixRaf = window.requestAnimationFrame(draw);
+  }
+
+  draw();
+}
+
+function stopMatrix() {
+  matrixRain.hidden = true;
+  if (matrixRaf) window.cancelAnimationFrame(matrixRaf);
+  matrixRaf = null;
+}
+
+function setMatrix(on) {
+  if (on === matrixActive) return;
+  matrixActive = on;
+  if (on) startMatrix();
+  else stopMatrix();
+}
+
+triggerMatrixBtn.addEventListener('click', () => {
+  setMatrix(true);
+  beep(700, 0.08);
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && matrixActive) setMatrix(false);
+});
+
+// ── View switching (SCANNER / PIPELINE) ───────────────────────────────────
+
+function switchView(mode) {
+  const scanner = mode === 'scanner';
+  viewScanner.hidden = !scanner;
+  viewPipeline.hidden = scanner;
+  tabScanner.classList.toggle('active', scanner);
+  tabScanner.setAttribute('aria-selected', String(scanner));
+  tabPipeline.classList.toggle('active', !scanner);
+  tabPipeline.setAttribute('aria-selected', String(!scanner));
+  modeStatusText.textContent = scanner ? 'SCANNER' : 'PIPELINE';
+  if (scanner) window.setTimeout(() => input.focus(), 50);
+}
+
+tabScanner.addEventListener('click', () => switchView('scanner'));
+tabPipeline.addEventListener('click', () => switchView('pipeline'));
+
+// ── Event listeners ───────────────────────────────────────────────────────
+
 form.addEventListener('submit', handleSubmit);
 sampleLegit.addEventListener('click', () => useSample(sampleLegit.dataset.url));
 samplePhish.addEventListener('click', () => useSample(samplePhish.dataset.url));
@@ -78,39 +282,28 @@ copyResultBtn.addEventListener('click', copyResult);
 showAllBtn.addEventListener('click', toggleAllFeatures);
 historyClearBtn.addEventListener('click', clearHistory);
 
-input.addEventListener('input', () => {
-  hideInputError();
-});
+input.addEventListener('keydown', () => playKey());
+input.addEventListener('input', hideInputError);
+
+// ── Init ──────────────────────────────────────────────────────────────────
 
 renderHistory();
-initTilt();
+initTheme();
+applyCRT();
+updateSfxUI();
+updateClock();
+window.setInterval(updateClock, 1000);
 
-// Subtle pointer tilt for product surfaces (hero analyzer + mockup).
-function initTilt() {
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  if (!window.matchMedia('(hover: hover)').matches) return;
-  const MAX_TILT_DEG = 3;
-  document.querySelectorAll('[data-tilt]').forEach((el) => {
-    el.addEventListener('mousemove', (e) => {
-      const rect = el.getBoundingClientRect();
-      const px = (e.clientX - rect.left) / rect.width - 0.5;
-      const py = (e.clientY - rect.top) / rect.height - 0.5;
-      el.style.transform = `perspective(900px) rotateX(${(-py * MAX_TILT_DEG).toFixed(2)}deg) rotateY(${(px * MAX_TILT_DEG).toFixed(2)}deg)`;
-    });
-    el.addEventListener('mouseleave', () => {
-      el.style.transform = '';
-    });
-  });
-}
+// ── Sample URLs ───────────────────────────────────────────────────────────
 
-// Use Sample URL
 function useSample(url) {
   input.value = url;
   hideInputError();
   form.requestSubmit();
 }
 
-// Form Submission Handler
+// ── Form submission ───────────────────────────────────────────────────────
+
 async function handleSubmit(e) {
   e.preventDefault();
 
@@ -118,11 +311,13 @@ async function handleSubmit(e) {
   const { url: formattedUrl, error } = normalizeUrl(input.value);
   if (error) {
     showInputError(error);
+    playError();
     return;
   }
   input.value = formattedUrl;
 
   hideInputError();
+  beep(520, 0.04);
   showLoading();
 
   try {
@@ -147,7 +342,8 @@ async function handleSubmit(e) {
   }
 }
 
-// Render Result Card
+// ── Result rendering ──────────────────────────────────────────────────────
+
 function renderResult(data) {
   const isPhishing = data.prediction === 'PHISHING';
   const confidencePct = Math.round(data.confidence * 100);
@@ -192,8 +388,8 @@ function renderResult(data) {
         <div class="exp-content">
           <div class="exp-label" title="SHAP contribution: ${escapeHtml(String(item.shap_value))}">${escapeHtml(item.label)}</div>
           <div class="exp-detail">
-            Value: <code>${escapeHtml(String(item.value))}</code> &bull;
-            Impact: <strong>${item.impact.toUpperCase()}</strong> (${item.direction})
+            VALUE: <code>${escapeHtml(String(item.value))}</code> &bull;
+            IMPACT: <strong>${item.impact.toUpperCase()}</strong> (${item.direction})
           </div>
           <div class="exp-bar" aria-hidden="true">
             <div class="exp-bar-fill ${bulletClass}" style="width: ${barWidth}%"></div>
@@ -214,9 +410,12 @@ function renderResult(data) {
   saveToHistory(data);
   hideLoading();
   resultState.hidden = false;
+  if (isPhishing) playError();
+  else playSuccess();
 }
 
-// UI State Toggles
+// ── UI state toggles ──────────────────────────────────────────────────────
+
 function setLoadingStep(index) {
   loadingSteps.forEach((el, i) => {
     if (!el) return;
@@ -265,6 +464,7 @@ function showError(msg) {
   errorMessage.textContent = msg;
   errorState.hidden = false;
   resultState.hidden = true;
+  playError();
 }
 
 function resetForm() {
@@ -293,12 +493,12 @@ function copyResult() {
   const text = buildCopyText(currentAnalysisResult);
   navigator.clipboard.writeText(text).then(() => {
     const originalText = copyResultBtn.innerHTML;
-    copyResultBtn.innerHTML = '✓ Copied!';
-    setTimeout(() => { copyResultBtn.innerHTML = originalText; }, 2000);
+    copyResultBtn.innerHTML = '[ ✓ COPIED ]';
+    window.setTimeout(() => { copyResultBtn.innerHTML = originalText; }, 2000);
   });
 }
 
-// ── "Show all features" progressive disclosure ──────────────────────────────
+// ── "Show all features" progressive disclosure ────────────────────────────
 
 async function toggleAllFeatures() {
   if (allFeaturesGrid.hidden) {
@@ -335,7 +535,7 @@ function renderAllFeatures(features) {
   });
 }
 
-// ── Recent scans history (localStorage) ─────────────────────────────────────
+// ── Recent scans history (localStorage) ───────────────────────────────────
 
 function loadHistory() {
   try {
