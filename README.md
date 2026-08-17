@@ -1,123 +1,105 @@
-# 🛡️ PhishGuard — AI-Powered Phishing URL Detection
+# PhishGuard
 
-> Analyzes URLs using machine learning and explains exactly *why* a URL is suspicious.
+Detects phishing URLs with an XGBoost model and explains every verdict with SHAP values.
 
 [![Python](https://img.shields.io/badge/Python-3.14-blue?logo=python)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi)](https://fastapi.tiangolo.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/Status-Stable-green)]()
 
-**PhishGuard** is a full-stack cybersecurity web application that uses a machine learning model (XGBoost + SHAP) to classify URLs as **legitimate** or **phishing**, and provides a human-readable explanation of the prediction.
+This is my final-year minor project — a full-stack app that takes a URL, classifies
+it as phishing or legitimate, and tells you *why*. It's live, so you can try it
+without setting anything up:
 
----
+- **UI:** [shauryarawat29.github.io/phishguard](https://shauryarawat29.github.io/phishguard)
+- **API:** `https://phishguard-api-dkoj.onrender.com` (health check at `/api/health`)
+- **API docs:** Swagger UI at `/docs` (enabled by default locally; gated off in production)
 
-> ✅ **Stable:** PhishGuard is feature-complete and deployed. See the
-> [roadmap](ROADMAP.md) for planned improvements.
+The idea was to build the whole pipeline end to end myself — feature extraction,
+model training, a FastAPI backend, and a frontend that doesn't just give you a
+"PHISHING / LEGIT" verdict but shows you exactly which signals pushed it one way
+or the other.
 
----
+## What it does
 
-## Quick Links
+1. You paste a URL into the page.
+2. The backend extracts 33 structural and lexical features — URL length, subdomain
+   count, suspicious keywords, TLD type, entropy, brand-spoofing, that kind of thing.
+3. An XGBoost model scores it as **PHISHING** or **LEGITIMATE**, with a confidence
+   level that's calibrated (not just a raw model probability).
+4. SHAP values explain which features drove the prediction, ranked by impact.
 
-- 🌐 **Live UI:** [shauryarawat29.github.io/phishguard](https://shauryarawat29.github.io/phishguard)
-- 🛰️ **Live API:** `https://phishguard-api-dkoj.onrender.com` (health: `/api/health`)
-- 📖 **API Docs:** Interactive Swagger UI at `/docs` (enabled by default locally at
-  `http://localhost:8000/docs`; gated off in production via `DOCS_ENABLED`)
-- 📓 **ML Notebook:** `notebooks/phishing_detection.ipynb`
+One important detail: the server **never visits** the URL you submit. All feature
+extraction is done on the string itself. No DNS lookups, no HTTP fetches — which
+also means no SSRF-style attack surface.
 
----
+## Tech stack
 
-## What It Does
-
-1. You enter a URL into the web interface
-2. The system extracts 33 structural and lexical features from the URL
-3. An XGBoost model classifies it as **PHISHING** or **LEGITIMATE**
-4. A risk score and confidence level are calculated
-5. SHAP values explain *which features* drove the prediction
-
----
-
-## Technology Stack
-
-| Layer | Technology |
+| Layer | What I used |
 |---|---|
-| ML Pipeline | Python, scikit-learn, XGBoost, SHAP |
-| Backend API | FastAPI, uvicorn, Pydantic |
-| Frontend | HTML, CSS, JavaScript |
+| ML | Python, scikit-learn, XGBoost, SHAP |
+| Backend | FastAPI, uvicorn, Pydantic |
+| Frontend | Plain HTML, CSS, JS (no framework) |
 | Deployment | Render.com (API) + GitHub Pages (UI) |
 
----
+The frontend is intentionally dependency-free — just static files. (There's a bit
+of vitest/eslint tooling in `frontend/` for the dev workflow, but it's not needed
+to run or serve the app.)
 
-## Project Structure
+## Project layout
 
 ```
 phishguard/
-├── ml/                  # Feature extraction, training, explainability
-├── notebooks/           # Jupyter ML pipeline notebook
-├── models/              # Trained artifacts (gitignored — see scripts/rebuild_model.py)
-├── backend/             # FastAPI application
-│   ├── main.py          # App entry: middleware, routing, static mount
-│   ├── config.py        # pydantic-settings configuration
+├── ml/                  # feature extraction, training, explainability
+├── notebooks/           # Jupyter pipeline notebook
+├── models/              # trained artifacts (committed for deploy; retrain via scripts/rebuild_model.py)
+├── backend/             # FastAPI app
+│   ├── main.py          # entry point: middleware, routing, static mount
+│   ├── config.py        # pydantic-settings config
 │   ├── dependencies.py  # DI providers (predictor)
-│   ├── rate_limit.py    # slowapi limiter + per-route limits
 │   ├── routes/          # API endpoints
 │   └── services/        # validator, predictor
-├── frontend/            # Static web interface (+ dev-only vitest/eslint tooling)
-├── data/                # Dataset (gitignored, see data/README.md to download)
-├── docs/                # Mirror of frontend/ for GitHub Pages (keep in sync)
+├── frontend/            # static UI
+├── data/                # dataset (gitignored — see data/README.md to download)
+├── docs/                # mirror of frontend/ for GitHub Pages (keep in sync)
 ├── scripts/             # sync_docs.py, rebuild_model.py
-└── tests/               # Unit and integration tests
+└── tests/               # pytest suite
 ```
 
----
+## Running it locally
 
-## Getting Started (Local)
+You'll need Python 3.11+ and pip.
 
-### Prerequisites
-- Python 3.11+
-- pip
-
-### 1. Clone the repository
 ```bash
 git clone https://github.com/ShauryaRawat29/phishguard.git
 cd phishguard
-```
-
-### 2. Create a virtual environment
-```bash
 python -m venv .venv
-.venv\Scripts\activate   # Windows
-# source .venv/bin/activate  # macOS/Linux
-```
-
-### 3. Install dependencies
-```bash
+.venv\Scripts\activate    # Windows — or `source .venv/bin/activate` on macOS/Linux
 pip install -r requirements.txt
 pip install -r requirements-dev.txt
 ```
 
-### 4. Obtain the trained model
-The production model is committed to the repo at `models/phishing_model.joblib`,
-so no download is needed. If you want to retrain it from scratch:
+The trained model is committed at `models/phishing_model.joblib`, so you can skip
+training entirely. If you want to rebuild it from scratch:
 
 ```bash
-python scripts/rebuild_model.py    # downloads data if missing, then trains
-# or, for faster iteration:
+python scripts/rebuild_model.py    # downloads the dataset if missing, then trains
+# or, for quicker iteration:
 python ml/train.py
 ```
 
-### 5. (Alternative) Run the ML pipeline interactively
-Open `notebooks/phishing_detection.ipynb` in Jupyter and run all cells.
+Then start the backend:
 
-### 6. Start the backend
 ```bash
 uvicorn backend.main:app --reload
 ```
 
-### 7. Open the frontend
-Open `frontend/index.html` in your browser, or visit `http://localhost:8000`
-where FastAPI serves the UI directly.
+Open `http://localhost:8000` — FastAPI serves the frontend directly. (Or open
+`frontend/index.html` as a static file, though you'll need the API running for
+analyzes to work.)
 
----
+There's also a Jupyter notebook (`notebooks/phishing_detection.ipynb`) that walks
+through the whole ML pipeline interactively if you prefer that.
 
 ## Development
 
@@ -127,118 +109,84 @@ ruff check .                 # lint
 ruff format --check .        # format check
 python scripts/sync_docs.py  # keep docs/ mirror in sync with frontend/
 
-# Frontend dev tooling (dev-only; frontend/ stays plain static files)
+# frontend tooling (optional, dev only)
 cd frontend
-npm install                  # once — installs vitest + eslint
-npm test                     # vitest unit tests for frontend/logic.js
-npm run lint                 # eslint on frontend JS
+npm install
+npm test                     # vitest tests for frontend/logic.js
+npm run lint                 # eslint
 ```
 
 CI runs lint, format, tests (with coverage), and verifies the `docs/` mirror on
-every push and pull request.
-
----
+every push and PR.
 
 ## Deployment
 
-PhishGuard ships with free-tier deployment config for both halves of the app:
+Both halves have free-tier configs checked into the repo.
 
-### API — Render (free)
+### API — Render
 
-1. Push this repo to GitHub.
-2. Go to [render.com](https://render.com) → **New** → **Blueprint**, and point it
-   at this repo. Render reads `render.yaml` and creates the `phishguard-api`
-   web service automatically.
-3. Set the `CORS_ORIGINS` environment variable to your GitHub Pages URL
-   (e.g. `https://shauryarawat29.github.io`) in the Render dashboard.
-4. Set `TRUST_PROXY_HEADERS=true` (already the default in `render.yaml`) so rate
+1. Push the repo to GitHub.
+2. On [render.com](https://render.com), create a **Blueprint** and point it at the
+   repo. Render reads `render.yaml` and sets up the `phishguard-api` service.
+3. Set `CORS_ORIGINS` to your Pages URL (e.g. `https://shauryarawat29.github.io`).
+4. `TRUST_PROXY_HEADERS=true` is the default in `render.yaml` — keep it so rate
    limiting sees real client IPs behind the proxy.
 
-The service uses the repo's `Dockerfile` and the committed model at
-`models/phishing_model.joblib`. The image runs as a non-root user and
-includes a `HEALTHCHECK` against `/api/health`.
+The service builds from the repo's `Dockerfile` and uses the committed model. The
+image runs as a non-root user and has a `HEALTHCHECK` against `/api/health`.
 
-> Note: Render's free tier spins the service down after 15 minutes of
-> inactivity; the first request after idle takes ~30-60s to respond (cold
-> start). This is fine for a demo/portfolio project.
+One gotcha: Render's free tier sleeps the service after ~15 minutes idle, so the
+first request after a nap takes 30–60s (cold start). Fine for a portfolio project.
 
-#### Keeping the free API warm (optional)
-
-To avoid cold starts, ping the service at least every 10 minutes. Two free
-options are included:
-
-- **Built-in:** `.github/workflows/keep-warm.yml` pings `/api/health` on a cron
-  schedule (every 10 minutes) using GitHub Actions — no extra account needed.
-- **UptimeRobot:** create a free HTTP(S) monitor for
+To keep it warm there are two free options:
+- `.github/workflows/keep-warm.yml` pings `/api/health` every 10 minutes via
+  GitHub Actions.
+- An [UptimeRobot](https://uptimerobot.com) monitor on
   `https://phishguard-api-dkoj.onrender.com/api/health` at a 5-minute interval.
-  UptimeRobot also emails you if the service goes down.
+  This one's the more reliable long-term pick — GitHub Actions stops running
+  scheduled workflows after 60 days of repo inactivity.
 
-Note: GitHub Actions only runs scheduled workflows for repos that have had
-activity in the last 60 days, so an UptimeRobot monitor is the more reliable
-long-term option for a dormant repo.
+### UI — GitHub Pages
 
-### UI — GitHub Pages (free)
+1. Repo **Settings → Pages → Source: GitHub Actions**.
+2. `.github/workflows/pages.yml` deploys the `docs/` mirror (synced from
+   `frontend/`) on every push to `main`.
 
-1. In your repo: **Settings → Pages → Source: GitHub Actions**.
-2. The `.github/workflows/pages.yml` workflow deploys the `docs/` mirror
-   (synced from `frontend/`) on every push to `main`.
-3. Enable **Pages → Deploy from a branch** as an alternative if you prefer
-   `main` `/docs` instead of the Actions workflow.
+If you'd rather serve the UI from the API itself, FastAPI mounts `frontend/`
+automatically — the Pages setup is just the zero-server option.
 
-The frontend calls the API at the same origin in production, so set the API
-deployment to serve the UI too (FastAPI mounts `frontend/` automatically), or
-point the GitHub Pages `CORS_ORIGINS` at your Pages URL.
+## Model notes
 
----
+Honestly, the numbers are a bit ridiculous for such a simple feature set. The
+model is trained on a 468,783-URL dataset and sits at **0.9973 test F1** with an
+AUC of **0.9994**. I also ran an adversarial evaluation (`scripts/adversarial_eval.py`)
+throwing leet substitutions, hex/double-encoding, fullwidth homoglyphs,
+backslash-scheme tricks, `www-` typosquats and token padding at it — evasion
+succeeds in **<1%** of samples.
 
-## Security Notes
+The confidence values you see in the UI are calibrated with an isotonic regression
+(`ml/train.py` saves `models/calibrator.joblib`), so a "94% phishing" is genuinely
+~94% likely, not just a raw model score. Calibration improved test log-loss from
+0.0147 to 0.0144. It's optional at runtime — if `CALIBRATOR_PATH` is missing, the
+API falls back to raw probabilities.
 
-- The server **never** makes network requests to the URLs it analyzes — all
-  feature extraction is lexical/structural, preventing SSRF.
-- Rate limiting is applied per-IP on `POST /api/analyze`
-  (`RATE_LIMIT_PER_MINUTE`). Behind a proxy set `TRUST_PROXY_HEADERS=true` and
-  list your proxy in `TRUSTED_PROXY_IPS` so `X-Forwarded-For` cannot be spoofed
-  by clients.
-- Allowed Host headers are enforced with `TrustedHostMiddleware`
-  (`TRUSTED_HOSTS`), preventing DNS-rebinding style header poisoning.
-- HTTP responses carry hardened security headers:
-  - `Strict-Transport-Security` (HSTS, over HTTPS only; `HSTS_ENABLED`)
-  - `Content-Security-Policy` (self + Google Fonts + jsdelivr for the Pages UI;
-    `frame-ancestors 'none'`)
-  - `Cache-Control: no-store` and `Cross-Origin-Resource-Policy: same-origin`
-    on API responses
-- Interactive API docs (`/docs`, `/redoc`, `/openapi.json`) are disabled in
-  production (`DOCS_ENABLED=false`) to hide the API surface.
-- CORS rejects wildcard `*` origins in production (`CORS_ORIGINS`).
-- Unsafe URI schemes (`file://`, `data:`, `javascript:`) are rejected.
-- `pip-audit` runs in CI to catch vulnerable dependencies; Dependabot keeps
-  Python and GitHub Actions dependencies updated automatically.
-- Security vulnerabilities are handled privately via GitHub Security
-  Advisories — see [`SECURITY.md`](SECURITY.md).
+## Security notes
 
-### Adversarial robustness
-
-`scripts/adversarial_eval.py` measures how well the model resists common
-evasion tricks — leet substitutions, hex/double-encoding, fullwidth unicode
-homoglyphs, backslash-scheme tricks, `www-` sandwich typosquats, suspicious
-token padding, and benign subdomain prefixes. Against the retrained
-33-feature model (full 468,783-URL dataset), evasion succeeds in **<1%** of
-adversarial samples while clean F1 stays at **0.9973**. Host-shape
-perturbations (token padding, backslash tricks) produce conservative
-false positives by design: an abnormal host or suspicious keyword in the
-path flags the URL. Risk thresholds (`decision_threshold`,
-`high_risk_threshold`, `low_risk_threshold`) are configurable via
-`Settings` / `.env`.
-
-### Probability calibration
-
-Reported confidence values are calibrated with an isotonic regression fitted
-at train time (`ml/train.py` saves `models/calibrator.joblib`), so the API's
-confidence reflects real-world probability. Calibration is monotonic (ranking
-is preserved) and improved test log-loss from 0.0147 to 0.0144. It is optional
-at runtime: if `CALIBRATOR_PATH` is missing, raw model probabilities are used.
-
----
+- No network requests to analyzed URLs (SSRF-safe by design).
+- Per-IP rate limiting on `POST /api/analyze` (`RATE_LIMIT_PER_MINUTE`). Behind a
+  proxy, keep `TRUST_PROXY_HEADERS=true` and list the proxy in `TRUSTED_PROXY_IPS`
+  so `X-Forwarded-For` can't be spoofed.
+- `TrustedHostMiddleware` enforces allowed hosts (`TRUSTED_HOSTS`), preventing
+  DNS-rebinding style header poisoning.
+- Hardened response headers: HSTS (over HTTPS, `HSTS_ENABLED`), a Content-Security
+  Policy (self + Google Fonts + jsdelivr for the Pages UI; `frame-ancestors 'none'`),
+  `Cache-Control: no-store` and `Cross-Origin-Resource-Policy: same-origin`.
+- `/docs`, `/redoc`, `/openapi.json` are disabled in production (`DOCS_ENABLED=false`)
+  to keep the API surface small.
+- CORS rejects wildcard `*` origins in production.
+- Unsafe schemes (`file://`, `data:`, `javascript:`) are rejected.
+- `pip-audit` runs in CI; Dependabot keeps Python and Actions deps updated.
+- See [SECURITY.md](SECURITY.md) for how to report issues.
 
 ## License
 
