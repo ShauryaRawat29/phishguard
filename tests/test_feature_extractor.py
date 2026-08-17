@@ -266,6 +266,35 @@ def test_is_ipv6_false_ipv4(ip_url):
     assert features["is_ipv6"] == 0
 
 
+def test_ipv6_host_parsed_correctly():
+    # The bracketed IPv6 literal must not be mangled by port-splitting.
+    features = extractor.extract("https://[2001:db8::1]:8443/login")
+    assert features["domain_length"] == len("2001:db8::1")
+    assert features["has_port"] == 1
+    assert features["subdomain_count"] == 0
+
+
+def test_ipv6_without_port_has_no_port_flag():
+    features = extractor.extract("https://[2001:db8::1]/login")
+    assert features["has_port"] == 0
+    assert features["domain_length"] == len("2001:db8::1")
+
+
+def test_split_host_port_handles_ipv6():
+    from ml.feature_extractor import FeatureExtractor as FE
+
+    assert FE._split_host_port("[2001:db8::1]:8443") == ("2001:db8::1", "8443")
+    assert FE._split_host_port("[2001:db8::1]") == ("2001:db8::1", "")
+    assert FE._split_host_port("example.com:8080") == ("example.com", "8080")
+    assert FE._split_host_port("example.com") == ("example.com", "")
+
+
+def test_split_host_port_unclosed_bracket_returns_netloc():
+    from ml.feature_extractor import FeatureExtractor as FE
+
+    assert FE._split_host_port("[2001:db8::1") == ("[2001:db8::1", "")
+
+
 def test_sld_length():
     features = extractor.extract("https://github.com/user/repo")
     assert features["sld_length"] == len("github")

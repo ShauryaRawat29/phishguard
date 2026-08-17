@@ -303,8 +303,9 @@ class FeatureExtractor:
         netloc = parsed.netloc.lower()  # includes port if present
         path = parsed.path
 
-        # Strip port from netloc to get the pure host
-        host = netloc.split(":")[0]
+        # Split netloc into pure host and port, handling bracketed IPv6
+        # literals (e.g. "[2001:db8::1]:8443" -> host "2001:db8::1", port "8443").
+        host, port = self._split_host_port(netloc)
 
         # Determine subdomain structure
         host_parts = host.split(".")
@@ -328,7 +329,7 @@ class FeatureExtractor:
             # ── Domain-based features ──────────────────────────────────────
             "has_ip_address": int(self._has_ip_address(host)),
             "uses_https": int(scheme == "https"),
-            "has_port": int(":" in netloc),
+            "has_port": int(bool(port)),
             "subdomain_count": len(domain_parts),
             "has_suspicious_tld": int(tld in SUSPICIOUS_TLDS),
             "domain_hyphen_count": host.count("-"),
@@ -347,7 +348,7 @@ class FeatureExtractor:
             "is_whitelisted_domain": int(self._is_whitelisted_domain(host)),
             # ── Added in the 33-feature expansion ────────────────────────────
             "has_punycode": int("xn--" in host),
-            "is_ipv6": int(netloc.count(":") > 1),
+            "is_ipv6": int(":" in host),
             "sld_length": len(self._second_level_domain(host)),
             "path_has_https": int("https" in path.lower()),
             "brand_in_path": int(self._brand_in_path(path.lower())),
@@ -370,6 +371,34 @@ class FeatureExtractor:
         return [feature_dict[name] for name in self.FEATURE_NAMES]
 
     # ── Private helper methods ─────────────────────────────────────────────────
+
+    @staticmethod
+    def _split_host_port(netloc: str) -> tuple[str, str]:
+        """
+        Split a netloc into (host, port), handling bracketed IPv6 literals.
+
+        Examples:
+            "example.com"           -> ("example.com", "")
+            "example.com:8080"      -> ("example.com", "8080")
+            "[2001:db8::1]"         -> ("2001:db8::1", "")
+            "[2001:db8::1]:8443"    -> ("2001:db8::1", "8443")
+
+        Args:
+            netloc: Lowercased netloc from urlparse (may include a port).
+
+        Returns:
+            A (host, port) tuple; port is "" when absent.
+        """
+        if netloc.startswith("["):
+            close = netloc.find("]")
+            if close == -1:
+                return netloc, ""
+            host = netloc[1:close]
+            rest = netloc[close + 1 :]
+            port = rest[1:] if rest.startswith(":") else ""
+            return host, port
+        host, _, port = netloc.partition(":")
+        return host, port
 
     @staticmethod
     def _url_length(url: str) -> int:

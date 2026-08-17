@@ -1,6 +1,6 @@
 {
   "model_type": "XGBoost",
-  "training_date": "2026-08-17 06:52:43",
+  "training_date": "2026-08-17 07:11:47",
   "test_metrics": {
     "accuracy": 0.997,
     "precision": 0.9993,
@@ -15,7 +15,7 @@
       "Recall": 0.9877,
       "F1-Score": 0.9933,
       "ROC-AUC": 0.9981,
-      "Train_Time_s": 1.04
+      "Train_Time_s": 1.19
     },
     "Random Forest": {
       "Accuracy": 0.9966,
@@ -23,7 +23,7 @@
       "Recall": 0.9922,
       "F1-Score": 0.996,
       "ROC-AUC": 0.9985,
-      "Train_Time_s": 1.43
+      "Train_Time_s": 1.6
     },
     "XGBoost": {
       "Accuracy": 0.9971,
@@ -31,7 +31,7 @@
       "Recall": 0.9937,
       "F1-Score": 0.9967,
       "ROC-AUC": 0.9986,
-      "Train_Time_s": 0.65
+      "Train_Time_s": 0.72
     }
   }
 }

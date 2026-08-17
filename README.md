@@ -5,14 +5,14 @@
 [![Python](https://img.shields.io/badge/Python-3.14-blue?logo=python)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi)](https://fastapi.tiangolo.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-In%20Development-orange)]()
+[![Status](https://img.shields.io/badge/Status-Stable-green)]()
 
 **PhishGuard** is a full-stack cybersecurity web application that uses a machine learning model (XGBoost + SHAP) to classify URLs as **legitimate** or **phishing**, and provides a human-readable explanation of the prediction.
 
 ---
 
-> 🚧 **This project is currently under active development.**
-> Documentation will be updated as each phase is completed.
+> ✅ **Stable:** PhishGuard is feature-complete and deployed. See the
+> [roadmap](ROADMAP.md) for planned improvements.
 
 ---
 

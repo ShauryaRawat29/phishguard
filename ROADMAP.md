@@ -30,10 +30,76 @@ sessions — read it first when picking up a new session.
   defaults to all data. Test F1 **0.9965** on a 35k held-out test set
   (accuracy 0.9970, AUC 0.9986), XGBoost still the winner; adversarial evasion
   still **<1%** for all perturbations. Model artifacts recommitted.
-- **NOTE — next session:** the model is at the performance ceiling for this
-  feature set. Further gains would need new signals (e.g. more brands,
-  certificate/phishing-feed lookups — subject to the no-SSRF invariant), more
-  data from other sources, or hyperparameter tuning.
+- **Phase 6 ✅** — correctness sweep: IPv6 host-parsing fix, favicon sync bug,
+  full-dataset retrain, stale notebook/README cleanup. Model retrained (F1
+  0.9965, unchanged), adversarial evasion still <1%, 100% coverage.
+
+---
+
+## Phase 6 — Correctness Sweep
+
+- [x] 6.1 Fix IPv6 host parsing in `ml/feature_extractor.py`
+      (`host = netloc.split(":")[0]` corrupts bracketed IPv6 hosts → wrong
+      `domain_length`, `sld_length`, `domain_entropy`, `subdomain_count`).
+      Parse bracketed IPv6 properly; add tests.
+- [x] 6.2 Fix favicon sync bug: `frontend/favicon.svg` is not in
+      `docs/` and not in `sync_docs.py`'s `FILES` list. Add it and re-sync.
+- [x] 6.3 Retrain on the full dataset (features changed) + recommit model
+      artifacts + re-run `scripts/adversarial_eval.py`.
+- [x] 6.4 Fix stale notebook (`notebooks/phishing_detection.ipynb` says
+      "25 features" → 33; reflect full-dataset training).
+- [x] 6.5 Update README status badge (In Development → stable).
+- [x] 6.6 Tests for all of the above; run `pytest`, `ruff`, `sync_docs --check`,
+      commit, push.
+
+## Phase 7 — ML Refinement (no new Python deps)
+
+- [ ] 7.1 XGBoost hyperparameter search via `GridSearchCV` (depth, estimators,
+      learning rate) on the full dataset.
+- [ ] 7.2 Configurable risk thresholds: move `_get_risk_level` cutoffs
+      (0.70 / 0.40) into `Settings`; tune the 0.5 decision threshold.
+- [ ] 7.3 Extend `scripts/adversarial_eval.py`: double-encoding, fullwidth/
+      unicode homoglyphs, backslash tricks, `www-` sandwich.
+- [ ] 7.4 Optional: isotonic/Platt calibration for well-calibrated confidence.
+- [ ] 7.5 Retrain/recommit + re-run adversarial eval + docs updates.
+
+## Phase 8 — Backend Hardening & Observability
+
+- [ ] 8.1 Request-ID middleware + structured JSON logging (request id, latency,
+      status).
+- [ ] 8.2 Cache TTL on the FIFO prediction cache (predictor.py).
+- [ ] 8.3 Validator: restrict to `http` / `https` only (drop `ftp`).
+- [ ] 8.4 Richer `/api/health`: model metadata, feature count, uptime.
+- [ ] 8.5 Docker: non-root user + `HEALTHCHECK`.
+
+## Phase 9 — CI/CD & Security
+
+- [ ] 9.1 CI matrix: add Python 3.13 / 3.14.
+- [ ] 9.2 Coverage gate: `--cov-fail-under=95` in CI.
+- [ ] 9.3 Docker-build job in CI.
+- [ ] 9.4 Dependabot config + `SECURITY.md`.
+- [ ] 9.5 Tests for new behaviors; docs updates.
+
+## Phase 10 — Frontend & DX (dev-only JS tooling)
+
+- [ ] 10.1 Add vitest + eslint (dev-only; `frontend/` stays plain static files;
+      docs sync unchanged).
+- [ ] 10.2 Unit-test `app.js`: extract pure functions (buildVerdictSummary,
+      escapeHtml, history) to make them testable.
+- [ ] 10.3 UX fixes: skip-to-content link, real loading-step progression,
+      copy-result includes explanation.
+- [ ] 10.4 Client/server validation parity: mirror http/https-only rule in
+      `app.js`.
+- [ ] 10.5 Sync docs mirror + commit.
+
+---
+
+## Invariants
+
+- Server NEVER makes network requests to analyzed URLs (no SSRF).
+- No new runtime dependencies unless necessary (prefer stdlib / existing libs).
+- `docs/` must stay byte-for-byte in sync with `frontend/` (CI enforces).
+- Feature count is referenced in many places — update all when it changes.
 
 ---
 
