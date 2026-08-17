@@ -81,6 +81,7 @@ class PhishGuardPredictor:
         self.is_loaded: bool = False
         self._model: Any = None
         self._explainer: PhishGuardExplainer | None = None
+        self._calibrator: Any = None
         self._extractor: FeatureExtractor = FeatureExtractor()
         self.feature_names: list[str] = FeatureExtractor.FEATURE_NAMES
 
@@ -118,6 +119,7 @@ class PhishGuardPredictor:
                     )
 
             self._explainer = PhishGuardExplainer(self._model, self.feature_names)
+            self._calibrator = self._load_calibrator(settings.calibrator_path)
             self.is_loaded = True
             logger.info("Model loaded from: %s", model_path)
         except FileNotFoundError:
@@ -128,6 +130,38 @@ class PhishGuardPredictor:
             )
         except Exception as e:
             logger.error("Failed to load model: %s", e)
+
+    def _load_calibrator(self, calibrator_path: str) -> Any:
+        """
+        Load the isotonic probability calibrator, if one is available.
+
+        Calibration is optional: a missing or unusable calibrator falls back to
+        raw model probabilities instead of failing prediction.
+
+        Args:
+            calibrator_path: Path to the calibrator joblib file.
+
+        Returns:
+            The fitted calibrator object (must expose ``predict``), or None.
+        """
+        try:
+            calibrator = joblib.load(calibrator_path)
+            if not hasattr(calibrator, "predict"):
+                raise ValueError(
+                    "Loaded calibrator does not implement predict(); "
+                    "expected an isotonic / sigmoid calibrator."
+                )
+            logger.info("Probability calibrator loaded from: %s", calibrator_path)
+            return calibrator
+        except FileNotFoundError:
+            logger.warning(
+                "Calibrator file not found at '%s'. Using raw model probabilities.",
+                calibrator_path,
+            )
+            return None
+        except Exception as e:
+            logger.error("Failed to load calibrator: %s", e)
+            return None
 
     # ─── Prediction ────────────────────────────────────────────────────────────
 
@@ -165,6 +199,11 @@ class PhishGuardPredictor:
         X = np.array(feature_vector).reshape(1, -1)
         proba = self._model.predict_proba(X)[0]
         phishing_proba = float(proba[1])
+
+        # 2b. Apply the optional isotonic probability calibrator (fitted at
+        #     train time) so the reported confidence is well-calibrated.
+        if self._calibrator is not None:
+            phishing_proba = float(np.clip(self._calibrator.predict([phishing_proba])[0], 0.0, 1.0))
 
         # 3. Deterministic domain-reputation overrides (configurable).
         if (

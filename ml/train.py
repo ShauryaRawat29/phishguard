@@ -5,10 +5,14 @@ End-to-end model training script for PhishGuard.
 
 1. Loads raw dataset from data/phishing_urls.csv.
 2. Extracts 33 URL features using ml.feature_extractor.FeatureExtractor.
-3. Splits data into Train (70%), Validation (15%), and Test (15%) sets.
+3. Splits data into Train (70%), Validation (15%), and Test (15%) sets, then
+   carves a calibration split out of the training set.
 4. Trains Logistic Regression, Random Forest, and XGBoost models.
 5. Evaluates model performance (Accuracy, Precision, Recall, F1-score, ROC-AUC).
 6. Selects and serializes the best model to models/phishing_model.joblib.
+7. Fits an isotonic probability calibrator (models/calibrator.joblib) so the
+   deployed confidence values are well-calibrated, and reports before/after
+   Brier score and log loss on the held-out test set.
 
 Usage:
     python ml/train.py
@@ -24,8 +28,17 @@ import joblib
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.isotonic import IsotonicRegression
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, roc_auc_score
+from sklearn.metrics import (
+    accuracy_score,
+    brier_score_loss,
+    f1_score,
+    log_loss,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+)
 from sklearn.model_selection import GridSearchCV, train_test_split
 from xgboost import XGBClassifier
 
@@ -120,14 +133,27 @@ def main():
         X_temp, y_temp, test_size=0.50, random_state=42, stratify=y_temp
     )
 
+    # Carve a calibration split out of the training set. The calibration
+    # targets must be data the winning model has NOT seen, otherwise the
+    # fitted probabilities would be overconfident and the calibration skewed.
+    X_train, X_cal, y_train, y_cal = train_test_split(
+        X_train, y_train, test_size=0.20, random_state=42, stratify=y_train
+    )
+
     print("\nData Splits:")
-    print(f"   Train set:      {X_train.shape[0]} samples")
-    print(f"   Validation set: {X_val.shape[0]} samples")
-    print(f"   Test set:       {X_test.shape[0]} samples")
+    print(f"   Train set:        {X_train.shape[0]} samples")
+    print(f"   Calibration set:  {X_cal.shape[0]} samples")
+    print(f"   Validation set:   {X_val.shape[0]} samples")
+    print(f"   Test set:         {X_test.shape[0]} samples")
 
     # Optional XGBoost hyperparameter search on a capped sample of the
     # training set (keeps grid search fast while spanning the class balance).
-    xgb_params = {"n_estimators": 150, "max_depth": 6, "learning_rate": 0.1}
+    # Default XGBoost params are the established GridSearchCV best (Phase 8):
+    # learning_rate=0.05, max_depth=6, n_estimators=200. Baking them in as
+    # defaults keeps `python ml/train.py` and `scripts/rebuild_model.py` (which
+    # does not pass --tune) reproducing the production model. Re-tune with
+    # --tune if the dataset changes materially.
+    xgb_params = {"n_estimators": 200, "max_depth": 6, "learning_rate": 0.05}
     if args.tune:
         print("\nRunning XGBoost hyperparameter search (GridSearchCV)...")
         tune_df = df.sample(n=min(args.tune_samples, len(df)), random_state=42)
@@ -224,11 +250,41 @@ def main():
     print(f"   Test Set F1-Score:  {test_f1:.4f}")
     print(f"   Test Set ROC-AUC:   {test_auc:.4f}")
 
+    # Probability calibration: fit a monotonic isotonic transform mapping raw
+    # model scores -> calibrated phishing probabilities. The transform is
+    # fitted on the held-out calibration split (never the test set).
+    print("\nFitting isotonic probability calibration...")
+    cal_scores = best_model.predict_proba(X_cal)[:, 1]
+    calibrator = IsotonicRegression(out_of_bounds="clip")
+    calibrator.fit(cal_scores, y_cal)
+
+    # Evaluate the calibrated probabilities on the test set: Brier score and
+    # log loss should drop (better calibration) while ranking is preserved
+    # (isotonic is monotonic, so AUC is unchanged).
+    y_test_proba_cal = calibrator.predict(y_test_proba)
+    y_test_proba_cal = np.clip(y_test_proba_cal, 0.0, 1.0)
+    y_test_pred_cal = (y_test_proba_cal >= 0.5).astype(int)
+
+    raw_brier = brier_score_loss(y_test, y_test_proba)
+    cal_brier = brier_score_loss(y_test, y_test_proba_cal)
+    raw_ll = log_loss(y_test, y_test_proba)
+    cal_ll = log_loss(y_test, y_test_proba_cal)
+    cal_acc = accuracy_score(y_test, y_test_pred_cal)
+    cal_f1 = f1_score(y_test, y_test_pred_cal, zero_division=0)
+
+    print(f"   Brier score        raw={raw_brier:.4f} -> calibrated={cal_brier:.4f}")
+    print(f"   Log loss           raw={raw_ll:.4f} -> calibrated={cal_ll:.4f}")
+    print(f"   Calibrated test accuracy: {cal_acc:.4f} | F1: {cal_f1:.4f}")
+
     # Save artifacts
     os.makedirs("models", exist_ok=True)
     model_output_path = os.path.join("models", "phishing_model.joblib")
     joblib.dump(best_model, model_output_path)
     print(f"\nSerialized model saved to '{model_output_path}'")
+
+    calibrator_path = os.path.join("models", "calibrator.joblib")
+    joblib.dump(calibrator, calibrator_path)
+    print(f"Serialized calibrator saved to '{calibrator_path}'")
 
     feature_names_path = os.path.join("models", "feature_names.json")
     with open(feature_names_path, "w") as f:
@@ -244,6 +300,20 @@ def main():
             "recall": round(test_rec, 4),
             "f1_score": round(test_f1, 4),
             "roc_auc": round(test_auc, 4),
+        },
+        "calibration": {
+            "method": "isotonic",
+            "calibration_split": int(X_cal.shape[0]),
+            "brier_score": {
+                "raw": round(raw_brier, 4),
+                "calibrated": round(cal_brier, 4),
+            },
+            "log_loss": {
+                "raw": round(raw_ll, 4),
+                "calibrated": round(cal_ll, 4),
+            },
+            "test_accuracy_calibrated": round(cal_acc, 4),
+            "test_f1_calibrated": round(cal_f1, 4),
         },
         "all_model_comparison": results,
     }

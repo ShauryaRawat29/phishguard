@@ -42,6 +42,10 @@ def test_threshold_defaults():
     assert settings.low_risk_threshold == 0.40
 
 
+def test_calibrator_path_default():
+    assert settings.calibrator_path == "models/calibrator.joblib"
+
+
 def test_thresholds_read_from_env(monkeypatch):
     monkeypatch.setenv("DECISION_THRESHOLD", "0.6")
     monkeypatch.setenv("HIGH_RISK_THRESHOLD", "0.8")

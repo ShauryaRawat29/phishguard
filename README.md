@@ -223,12 +223,20 @@ evasion tricks — leet substitutions, hex/double-encoding, fullwidth unicode
 homoglyphs, backslash-scheme tricks, `www-` sandwich typosquats, suspicious
 token padding, and benign subdomain prefixes. Against the retrained
 33-feature model (full 468,783-URL dataset), evasion succeeds in **<1%** of
-adversarial samples while clean F1 stays at **0.9972**. Host-shape
+adversarial samples while clean F1 stays at **0.9973**. Host-shape
 perturbations (token padding, backslash tricks) produce conservative
 false positives by design: an abnormal host or suspicious keyword in the
 path flags the URL. Risk thresholds (`decision_threshold`,
 `high_risk_threshold`, `low_risk_threshold`) are configurable via
 `Settings` / `.env`.
+
+### Probability calibration
+
+Reported confidence values are calibrated with an isotonic regression fitted
+at train time (`ml/train.py` saves `models/calibrator.joblib`), so the API's
+confidence reflects real-world probability. Calibration is monotonic (ranking
+is preserved) and improved test log-loss from 0.0147 to 0.0144. It is optional
+at runtime: if `CALIBRATOR_PATH` is missing, raw model probabilities are used.
 
 ---
 

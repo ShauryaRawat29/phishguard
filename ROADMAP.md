@@ -12,6 +12,19 @@ sessions — read it first when picking up a new session.
 
 ### Session log — 2026-08-17 (this session)
 
+- **8.4 ✅** (calibration, deferred from Phase 8) — isotonic probability
+  calibration: `ml/train.py` carves a 20% calibration split out of the
+  training set, fits `IsotonicRegression`, saves `models/calibrator.joblib`,
+  and reports raw→calibrated Brier score and log loss on the test set.
+  `predictor.py` applies the calibrator to raw model probabilities
+  (`CALIBRATOR_PATH`; graceful fallback to raw if missing). Retrained on the
+  full 468,783-URL dataset with the tuned params — test F1 **0.9973**,
+  accuracy 0.9961, AUC 0.9994 (matches the Phase 8 production model);
+  calibration improved test log loss 0.0147→0.0144. Also fixed a latent bug:
+  tuned best params are now the `ml/train.py` defaults so the canonical
+  `scripts/rebuild_model.py` path reproduces the production model instead of
+  silently training a weaker default-params model. Adversarial eval re-run
+  (unchanged: baseline F1 0.9971, evasion <1% for all perturbations).
 - **Phase 1 ✅** commit `b67e6a0` — security headers, TrustedHostMiddleware,
   docs gating, rate-limit XFF hardening, CORS prod rejection, `pip-audit` in CI.
 - **Phase 2 ✅** commit `0d17ed2` — 33 features (was 27), expanded brands/TLDs/
@@ -103,7 +116,10 @@ sessions — read it first when picking up a new session.
       (0.70 / 0.40) into `Settings`; tune the 0.5 decision threshold.
 - [x] 8.3 Extend `scripts/adversarial_eval.py`: double-encoding, fullwidth/
       unicode homoglyphs, backslash tricks, `www-` sandwich.
-- [ ] 8.4 Optional: isotonic/Platt calibration for well-calibrated confidence.
+- [x] 8.4 Isotonic probability calibration for well-calibrated confidence
+      (fitted on a held-out calibration split; `models/calibrator.joblib`;
+      applied in `predictor.py`; raw probabilities used if the file is
+      missing). See session log entry above.
 - [x] 8.5 Retrain/recommit + re-run adversarial eval + docs updates.
 
 ## Phase 9 — Backend Hardening & Observability

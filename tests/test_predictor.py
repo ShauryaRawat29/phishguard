@@ -249,6 +249,57 @@ def test_load_rejects_feature_name_mismatch(monkeypatch, tmp_path):
     assert PhishGuardPredictor().is_loaded is False
 
 
+# ─── Probability calibration ─────────────────────────────────────────────────
+
+
+def test_predict_applies_calibrator(monkeypatch, tmp_path):
+    """A fitted isotonic calibrator transforms the raw phishing probability."""
+    import joblib
+    from sklearn.isotonic import IsotonicRegression
+
+    from backend import config
+
+    model = _install_stub(monkeypatch, phishing_proba=0.99)
+    p = PhishGuardPredictor()
+
+    iso = IsotonicRegression(out_of_bounds="clip")
+    iso.fit([0.0, 0.5, 1.0], [0.0, 0.4, 0.75])
+    cal_path = tmp_path / "calibrator.joblib"
+    joblib.dump(iso, cal_path)
+
+    monkeypatch.setattr(config.settings, "calibrator_path", str(cal_path))
+    p._calibrator = p._load_calibrator(str(cal_path))
+
+    result = p.predict("https://example.com/calibrated")
+    assert result["confidence"] == pytest.approx(0.74, abs=0.01)
+    assert model.calls == 1
+
+
+def test_predict_falls_back_to_raw_without_calibrator(monkeypatch):
+    """No calibrator loaded -> raw model probability is reported unchanged."""
+    _install_stub(monkeypatch, phishing_proba=0.99)
+    p = PhishGuardPredictor()
+    assert p._calibrator is None
+    result = p.predict("https://example.com/no-calibrator")
+    assert result["confidence"] == pytest.approx(0.99, abs=1e-4)
+
+
+def test_load_calibrator_missing_file_returns_none(monkeypatch, tmp_path):
+    _install_stub(monkeypatch, phishing_proba=0.5)
+    p = PhishGuardPredictor()
+    assert p._load_calibrator(str(tmp_path / "missing.joblib")) is None
+
+
+def test_load_calibrator_rejects_non_predictable_object(monkeypatch, tmp_path):
+    import joblib
+
+    _install_stub(monkeypatch, phishing_proba=0.5)
+    p = PhishGuardPredictor()
+    bad = tmp_path / "bad.joblib"
+    joblib.dump({"not": "a calibrator"}, bad)
+    assert p._load_calibrator(str(bad)) is None
+
+
 # ─── Cache helpers ───────────────────────────────────────────────────────────
 
 

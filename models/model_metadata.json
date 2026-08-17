@@ -1,37 +1,51 @@
 {
   "model_type": "XGBoost",
-  "training_date": "2026-08-17 08:36:03",
+  "training_date": "2026-08-17 09:44:49",
   "test_metrics": {
     "accuracy": 0.9961,
     "precision": 0.9991,
-    "recall": 0.9954,
-    "f1_score": 0.9972,
+    "recall": 0.9955,
+    "f1_score": 0.9973,
     "roc_auc": 0.9994
+  },
+  "calibration": {
+    "method": "isotonic",
+    "calibration_split": 65630,
+    "brier_score": {
+      "raw": 0.0033,
+      "calibrated": 0.0033
+    },
+    "log_loss": {
+      "raw": 0.0147,
+      "calibrated": 0.0144
+    },
+    "test_accuracy_calibrated": 0.996,
+    "test_f1_calibrated": 0.9972
   },
   "all_model_comparison": {
     "Logistic Regression": {
       "Accuracy": 0.9879,
-      "Precision": 0.9958,
+      "Precision": 0.9957,
       "Recall": 0.9872,
-      "F1-Score": 0.9915,
+      "F1-Score": 0.9914,
       "ROC-AUC": 0.9984,
-      "Train_Time_s": 2.54
+      "Train_Time_s": 2.31
     },
     "Random Forest": {
-      "Accuracy": 0.9939,
-      "Precision": 0.9983,
-      "Recall": 0.9931,
-      "F1-Score": 0.9957,
+      "Accuracy": 0.994,
+      "Precision": 0.9984,
+      "Recall": 0.9932,
+      "F1-Score": 0.9958,
       "ROC-AUC": 0.9993,
-      "Train_Time_s": 3.73
+      "Train_Time_s": 2.57
     },
     "XGBoost": {
       "Accuracy": 0.9958,
       "Precision": 0.9988,
-      "Recall": 0.9952,
-      "F1-Score": 0.997,
+      "Recall": 0.9953,
+      "F1-Score": 0.9971,
       "ROC-AUC": 0.9993,
-      "Train_Time_s": 1.49
+      "Train_Time_s": 2.19
     }
   }
 }

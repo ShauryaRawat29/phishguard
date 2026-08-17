@@ -55,6 +55,9 @@ class Settings(BaseSettings):
     model_path: str = "models/phishing_model.joblib"
     feature_names_path: str = "models/feature_names.json"
     metadata_path: str = "models/model_metadata.json"
+    # Isotonic probability calibrator fitted by ml/train.py. Optional at
+    # runtime: if the file is missing, raw model probabilities are used.
+    calibrator_path: str = "models/calibrator.joblib"
     # Seconds a cached prediction stays fresh before it is re-computed.
     cache_ttl_seconds: int = 300
 
