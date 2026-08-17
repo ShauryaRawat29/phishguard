@@ -52,45 +52,55 @@ sessions — read it first when picking up a new session.
 - [x] 6.6 Tests for all of the above; run `pytest`, `ruff`, `sync_docs --check`,
       commit, push.
 
-## Phase 7 — ML Refinement (no new Python deps)
+## Phase 7 — Dataset Extension
 
-- [ ] 7.1 XGBoost hyperparameter search via `GridSearchCV` (depth, estimators,
+- [ ] 7.1 Multi-source data collection: integrate PhishTank, OpenPhish, and UCI ML Repository datasets
+- [ ] 7.2 Data augmentation: implement character substitution, typosquatting, and homoglyph generation
+- [ ] 7.3 Temporal updates: add recent 2024-2026 phishing URLs to capture new patterns
+- [ ] 7.4 Geographic diversity: add international URLs and country-specific TLDs
+- [ ] 7.5 Dataset validation: deduplication, format standardization, and quality checks
+- [ ] 7.6 Retrain and evaluate: compare model performance with extended dataset
+- [ ] 7.7 Update documentation and scripts for new data sources
+
+## Phase 8 — ML Refinement (no new Python deps)
+
+- [ ] 8.1 XGBoost hyperparameter search via `GridSearchCV` (depth, estimators,
       learning rate) on the full dataset.
-- [ ] 7.2 Configurable risk thresholds: move `_get_risk_level` cutoffs
+- [ ] 8.2 Configurable risk thresholds: move `_get_risk_level` cutoffs
       (0.70 / 0.40) into `Settings`; tune the 0.5 decision threshold.
-- [ ] 7.3 Extend `scripts/adversarial_eval.py`: double-encoding, fullwidth/
+- [ ] 8.3 Extend `scripts/adversarial_eval.py`: double-encoding, fullwidth/
       unicode homoglyphs, backslash tricks, `www-` sandwich.
-- [ ] 7.4 Optional: isotonic/Platt calibration for well-calibrated confidence.
-- [ ] 7.5 Retrain/recommit + re-run adversarial eval + docs updates.
+- [ ] 8.4 Optional: isotonic/Platt calibration for well-calibrated confidence.
+- [ ] 8.5 Retrain/recommit + re-run adversarial eval + docs updates.
 
-## Phase 8 — Backend Hardening & Observability
+## Phase 9 — Backend Hardening & Observability
 
-- [ ] 8.1 Request-ID middleware + structured JSON logging (request id, latency,
+- [ ] 9.1 Request-ID middleware + structured JSON logging (request id, latency,
       status).
-- [ ] 8.2 Cache TTL on the FIFO prediction cache (predictor.py).
-- [ ] 8.3 Validator: restrict to `http` / `https` only (drop `ftp`).
-- [ ] 8.4 Richer `/api/health`: model metadata, feature count, uptime.
-- [ ] 8.5 Docker: non-root user + `HEALTHCHECK`.
+- [ ] 9.2 Cache TTL on the FIFO prediction cache (predictor.py).
+- [ ] 9.3 Validator: restrict to `http` / `https` only (drop `ftp`).
+- [ ] 9.4 Richer `/api/health`: model metadata, feature count, uptime.
+- [ ] 9.5 Docker: non-root user + `HEALTHCHECK`.
 
-## Phase 9 — CI/CD & Security
+## Phase 10 — CI/CD & Security
 
-- [ ] 9.1 CI matrix: add Python 3.13 / 3.14.
-- [ ] 9.2 Coverage gate: `--cov-fail-under=95` in CI.
-- [ ] 9.3 Docker-build job in CI.
-- [ ] 9.4 Dependabot config + `SECURITY.md`.
-- [ ] 9.5 Tests for new behaviors; docs updates.
+- [ ] 10.1 CI matrix: add Python 3.13 / 3.14.
+- [ ] 10.2 Coverage gate: `--cov-fail-under=95` in CI.
+- [ ] 10.3 Docker-build job in CI.
+- [ ] 10.4 Dependabot config + `SECURITY.md`.
+- [ ] 10.5 Tests for new behaviors; docs updates.
 
-## Phase 10 — Frontend & DX (dev-only JS tooling)
+## Phase 11 — Frontend & DX (dev-only JS tooling)
 
-- [ ] 10.1 Add vitest + eslint (dev-only; `frontend/` stays plain static files;
+- [ ] 11.1 Add vitest + eslint (dev-only; `frontend/` stays plain static files;
       docs sync unchanged).
-- [ ] 10.2 Unit-test `app.js`: extract pure functions (buildVerdictSummary,
+- [ ] 11.2 Unit-test `app.js`: extract pure functions (buildVerdictSummary,
       escapeHtml, history) to make them testable.
-- [ ] 10.3 UX fixes: skip-to-content link, real loading-step progression,
+- [ ] 11.3 UX fixes: skip-to-content link, real loading-step progression,
       copy-result includes explanation.
-- [ ] 10.4 Client/server validation parity: mirror http/https-only rule in
+- [ ] 11.4 Client/server validation parity: mirror http/https-only rule in
       `app.js`.
-- [ ] 10.5 Sync docs mirror + commit.
+- [ ] 11.5 Sync docs mirror + commit.
 
 ---
 
