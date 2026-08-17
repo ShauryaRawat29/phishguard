@@ -26,7 +26,7 @@ import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, roc_auc_score
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GridSearchCV, train_test_split
 from xgboost import XGBClassifier
 
 # Ensure root path is accessible
@@ -51,6 +51,17 @@ def main():
         type=str,
         default=os.path.join("data", "phishing_urls.csv"),
         help="Path to the (url, label) training CSV (default: data/phishing_urls.csv)",
+    )
+    parser.add_argument(
+        "--tune",
+        action="store_true",
+        help="Run XGBoost hyperparameter search (GridSearchCV) before training",
+    )
+    parser.add_argument(
+        "--tune-samples",
+        type=int,
+        default=30000,
+        help="Max URLs to use for hyperparameter search (default: 30000)",
     )
     args = parser.parse_args()
 
@@ -114,15 +125,39 @@ def main():
     print(f"   Validation set: {X_val.shape[0]} samples")
     print(f"   Test set:       {X_test.shape[0]} samples")
 
+    # Optional XGBoost hyperparameter search on a capped sample of the
+    # training set (keeps grid search fast while spanning the class balance).
+    xgb_params = {"n_estimators": 150, "max_depth": 6, "learning_rate": 0.1}
+    if args.tune:
+        print("\nRunning XGBoost hyperparameter search (GridSearchCV)...")
+        tune_df = df.sample(n=min(args.tune_samples, len(df)), random_state=42)
+        tune_X = np.array([extractor.extract_as_list(str(u)) for u in tune_df[url_col].values])
+        tune_y = (tune_df[label_col].values == 0).astype(int)
+        param_grid = {
+            "max_depth": [4, 6, 8],
+            "n_estimators": [100, 200],
+            "learning_rate": [0.05, 0.1],
+        }
+        grid = GridSearchCV(
+            XGBClassifier(random_state=42, n_jobs=-1),
+            param_grid=param_grid,
+            cv=3,
+            scoring="f1",
+            n_jobs=-1,
+            verbose=1,
+        )
+        grid.fit(tune_X, tune_y)
+        xgb_params = grid.best_params_
+        print(f"   Best XGBoost params: {xgb_params}")
+        print(f"   Best CV F1: {grid.best_score_:.4f}")
+
     # Models to evaluate
     models = {
         "Logistic Regression": LogisticRegression(max_iter=1000, random_state=42),
         "Random Forest": RandomForestClassifier(
             n_estimators=100, max_depth=15, random_state=42, n_jobs=-1
         ),
-        "XGBoost": XGBClassifier(
-            n_estimators=150, max_depth=6, learning_rate=0.1, random_state=42, n_jobs=-1
-        ),
+        "XGBoost": XGBClassifier(random_state=42, n_jobs=-1, **xgb_params),
     }
 
     best_model_name = None

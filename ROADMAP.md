@@ -39,6 +39,15 @@ sessions — read it first when picking up a new session.
   `--dataset` flag in `ml/train.py`. Extended to **468,783 URLs** (333,741
   phishing / 135,042 legit). Retrained XGBoost: test F1 **0.9975** (was
   0.9965), accuracy 0.9964, AUC 0.9994, adversarial evasion still <1%.
+- **Phase 8 ✅** — ML refinement: XGBoost `GridSearchCV` tuning (`--tune`
+  in `ml/train.py`; best `learning_rate=0.05, max_depth=6, n_estimators=200`,
+  test F1 **0.9972**, accuracy 0.9961, AUC 0.9994); risk thresholds
+  (`decision_threshold` / `high_risk_threshold` / `low_risk_threshold`)
+  moved into `Settings` + `.env.example` with tests; `adversarial_eval.py`
+  extended with double-encoding, fullwidth homoglyphs, backslash-scheme and
+  `www-` sandwich perturbators (evasion still <1% for all; host-shape
+  perturbators remain conservative FP-prone by design). 8.4 (calibration)
+  deferred as optional.
 
 ---
 
@@ -70,14 +79,14 @@ sessions — read it first when picking up a new session.
 
 ## Phase 8 — ML Refinement (no new Python deps)
 
-- [ ] 8.1 XGBoost hyperparameter search via `GridSearchCV` (depth, estimators,
+- [x] 8.1 XGBoost hyperparameter search via `GridSearchCV` (depth, estimators,
       learning rate) on the full dataset.
-- [ ] 8.2 Configurable risk thresholds: move `_get_risk_level` cutoffs
+- [x] 8.2 Configurable risk thresholds: move `_get_risk_level` cutoffs
       (0.70 / 0.40) into `Settings`; tune the 0.5 decision threshold.
-- [ ] 8.3 Extend `scripts/adversarial_eval.py`: double-encoding, fullwidth/
+- [x] 8.3 Extend `scripts/adversarial_eval.py`: double-encoding, fullwidth/
       unicode homoglyphs, backslash tricks, `www-` sandwich.
 - [ ] 8.4 Optional: isotonic/Platt calibration for well-calibrated confidence.
-- [ ] 8.5 Retrain/recommit + re-run adversarial eval + docs updates.
+- [x] 8.5 Retrain/recommit + re-run adversarial eval + docs updates.
 
 ## Phase 9 — Backend Hardening & Observability
 

@@ -62,6 +62,15 @@ class Settings(BaseSettings):
     # Brand-spoofing attempt → floor phishing probability at this value.
     brand_spoof_confidence_floor: float = 0.95
 
+    # ─── Prediction thresholds ───────────────────────────────
+    # Decision threshold: phishing probability at/above this is "PHISHING".
+    decision_threshold: float = 0.5
+    # Risk-level cutoffs: >= high_risk_threshold → HIGH; >= low_risk_threshold
+    # → MEDIUM; below → LOW. Kept below the decision threshold by default so a
+    # borderline "LEGITIMATE" verdict can still carry a MEDIUM risk signal.
+    high_risk_threshold: float = 0.70
+    low_risk_threshold: float = 0.40
+
     # ─── Logging ─────────────────────────────────────────────
     log_level: str = "INFO"
 

@@ -6,12 +6,32 @@
   "leet_sld": {
     "phishing_f1": 0.9982,
     "evasion_rate": 0.0035,
-    "legit_fp_rate": 0.2928
+    "legit_fp_rate": 0.2823
   },
   "hex_encoded_sld": {
-    "phishing_f1": 0.9977,
-    "evasion_rate": 0.0047,
-    "legit_fp_rate": 0.1058
+    "phishing_f1": 0.9982,
+    "evasion_rate": 0.0035,
+    "legit_fp_rate": 0.1031
+  },
+  "double_encoded_sld": {
+    "phishing_f1": 0.9982,
+    "evasion_rate": 0.0035,
+    "legit_fp_rate": 0.1285
+  },
+  "fullwidth_homoglyph_sld": {
+    "phishing_f1": 0.9971,
+    "evasion_rate": 0.0058,
+    "legit_fp_rate": 0.0009
+  },
+  "backslash_scheme": {
+    "phishing_f1": 1.0,
+    "evasion_rate": 0.0,
+    "legit_fp_rate": 1.0
+  },
+  "www_hyphen_sandwich": {
+    "phishing_f1": 1.0,
+    "evasion_rate": 0.0,
+    "legit_fp_rate": 0.9607
   },
   "suspicious_token_padding": {
     "phishing_f1": 1.0,
@@ -21,6 +41,6 @@
   "benign_subdomain_prefix": {
     "phishing_f1": 0.9959,
     "evasion_rate": 0.0082,
-    "legit_fp_rate": 0.1084
+    "legit_fp_rate": 0.0865
   }
 }

@@ -143,6 +143,45 @@ def test_risk_level_thresholds():
     assert _get_risk_level(0.10) == "LOW"
 
 
+def test_risk_level_uses_configured_thresholds(monkeypatch):
+    from backend import config
+
+    monkeypatch.setattr(config.settings, "high_risk_threshold", 0.9)
+    monkeypatch.setattr(config.settings, "low_risk_threshold", 0.3)
+    assert _get_risk_level(0.85) == "MEDIUM"
+    assert _get_risk_level(0.95) == "HIGH"
+
+
+# ─── Decision threshold ──────────────────────────────────────────────────────
+
+
+def test_decision_threshold_is_configurable(monkeypatch):
+    """A configurable decision threshold flips the verdict for borderline scores."""
+    from backend import config
+
+    _install_stub(monkeypatch, phishing_proba=0.5)
+    p = PhishGuardPredictor()
+
+    monkeypatch.setattr(config.settings, "decision_threshold", 0.5)
+    assert p.predict("https://example.com/threshold")["prediction"] == "PHISHING"
+
+    monkeypatch.setattr(config.settings, "decision_threshold", 0.9)
+    assert p.predict("https://example.com/threshold2")["prediction"] == "LEGITIMATE"
+
+
+def test_borderline_legit_can_still_be_medium_risk(monkeypatch):
+    """Below the decision threshold but above low_risk_threshold -> MEDIUM."""
+    from backend import config
+
+    _install_stub(monkeypatch, phishing_proba=0.45)
+    p = PhishGuardPredictor()
+
+    monkeypatch.setattr(config.settings, "decision_threshold", 0.5)
+    result = p.predict("https://example.com/borderline")
+    assert result["prediction"] == "LEGITIMATE"
+    assert result["risk_level"] == "MEDIUM"
+
+
 # ─── Model load failure paths ────────────────────────────────────────────────
 
 

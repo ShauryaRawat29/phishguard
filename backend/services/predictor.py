@@ -43,10 +43,8 @@ def _get_risk_level(confidence: float) -> str:
     """
     Map a phishing probability score to a categorical risk level.
 
-    Thresholds:
-        >= 0.70 → HIGH
-        >= 0.40 → MEDIUM
-        <  0.40 → LOW
+    Thresholds are configurable via Settings (`high_risk_threshold` /
+    `low_risk_threshold`); defaults are HIGH >= 0.70, MEDIUM >= 0.40, else LOW.
 
     Args:
         confidence: Phishing probability from the model (0.0 to 1.0).
@@ -54,9 +52,9 @@ def _get_risk_level(confidence: float) -> str:
     Returns:
         "HIGH", "MEDIUM", or "LOW".
     """
-    if confidence >= 0.70:
+    if confidence >= settings.high_risk_threshold:
         return "HIGH"
-    elif confidence >= 0.40:
+    elif confidence >= settings.low_risk_threshold:
         return "MEDIUM"
     else:
         return "LOW"
@@ -178,7 +176,7 @@ class PhishGuardPredictor:
             # Brand spoofing attempt (e.g. paypal.ab, paypal-security.xyz)
             phishing_proba = max(phishing_proba, settings.brand_spoof_confidence_floor)
 
-        prediction = "PHISHING" if phishing_proba >= 0.5 else "LEGITIMATE"
+        prediction = "PHISHING" if phishing_proba >= settings.decision_threshold else "LEGITIMATE"
         risk_level = _get_risk_level(phishing_proba)
 
         # 4. Generate SHAP explanation

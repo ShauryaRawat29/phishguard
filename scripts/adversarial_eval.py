@@ -44,15 +44,18 @@ SUSPICIOUS_PATH_TOKEN = "/secure-login"
 BENIGN_SUBDOMAIN = "webmail."
 
 
+def _split_host_port(netloc: str) -> tuple[str, str]:
+    """Split a netloc into (host, port) preserving any port suffix."""
+    if ":" in netloc:
+        host, _, port = netloc.partition(":")
+        return host, ":" + port
+    return netloc, ""
+
+
 def _perturb_leet(url: str) -> str:
     """Replace look-alike letters in the second-level domain (e.g. o->0)."""
     parsed = urlparse(url)
-    host = parsed.netloc.lower()
-    if ":" in host:
-        host, _, port = host.partition(":")
-        port = ":" + port
-    else:
-        port = ""
+    host, port = _split_host_port(parsed.netloc.lower())
     parts = host.split(".")
     if len(parts) >= 2:
         sld = parts[-2]
@@ -64,18 +67,56 @@ def _perturb_leet(url: str) -> str:
 def _perturb_hex_encode(url: str) -> str:
     """Percent-encode the first letter of the second-level domain."""
     parsed = urlparse(url)
-    host = parsed.netloc.lower()
-    if ":" in host:
-        host, _, port = host.partition(":")
-        port = ":" + port
-    else:
-        port = ""
+    host, port = _split_host_port(parsed.netloc.lower())
     parts = host.split(".")
     if len(parts) >= 2 and parts[-2]:
         sld = parts[-2]
         parts[-2] = "%" + format(ord(sld[0]), "02x") + sld[1:]
     new_host = ".".join(parts) + port
     return parsed._replace(netloc=new_host).geturl()
+
+
+def _perturb_double_encode(url: str) -> str:
+    """Percent-encode the first SLD letter twice (e.g. %61 -> %2561)."""
+    parsed = urlparse(url)
+    host, port = _split_host_port(parsed.netloc.lower())
+    parts = host.split(".")
+    if len(parts) >= 2 and parts[-2]:
+        sld = parts[-2]
+        first = format(ord(sld[0]), "02x")
+        parts[-2] = "%25" + first + sld[1:]
+    return parsed._replace(netloc=".".join(parts) + port).geturl()
+
+
+def _perturb_fullwidth_homoglyph(url: str) -> str:
+    """Replace the first SLD letter with its fullwidth Unicode equivalent."""
+    parsed = urlparse(url)
+    host, port = _split_host_port(parsed.netloc.lower())
+    parts = host.split(".")
+    if len(parts) >= 2 and parts[-2]:
+        sld = parts[-2]
+        first = sld[0]
+        if "a" <= first <= "z":
+            first = chr(ord(first) + 0xFEE0)  # U+FF41 for 'a'
+        parts[-2] = first + sld[1:]
+    return parsed._replace(netloc=".".join(parts) + port).geturl()
+
+
+def _perturb_backslash_scheme(url: str) -> str:
+    """Swap '//' after the scheme for the browser-accepted '/\\/\\' form."""
+    marker = "://"
+    if marker not in url:
+        return url
+    scheme, _, rest = url.partition(marker)
+    return scheme + ":/\\/\\" + rest
+
+
+def _perturb_www_hyphen(url: str) -> str:
+    """Turn 'www.' into 'www-' (or prefix 'www-') to mimic typosquats."""
+    parsed = urlparse(url)
+    host, port = _split_host_port(parsed.netloc.lower())
+    new_host = "www-" + host[4:] if host.startswith("www.") else "www-" + host
+    return parsed._replace(netloc=new_host + port).geturl()
 
 
 def _perturb_token_padding(url: str) -> str:
@@ -94,6 +135,10 @@ def _perturb_benign_subdomain(url: str) -> str:
 PERTURBATIONS: dict[str, object] = {
     "leet_sld": _perturb_leet,
     "hex_encoded_sld": _perturb_hex_encode,
+    "double_encoded_sld": _perturb_double_encode,
+    "fullwidth_homoglyph_sld": _perturb_fullwidth_homoglyph,
+    "backslash_scheme": _perturb_backslash_scheme,
+    "www_hyphen_sandwich": _perturb_www_hyphen,
     "suspicious_token_padding": _perturb_token_padding,
     "benign_subdomain_prefix": _perturb_benign_subdomain,
 }

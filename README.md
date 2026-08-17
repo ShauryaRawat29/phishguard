@@ -209,11 +209,16 @@ point the GitHub Pages `CORS_ORIGINS` at your Pages URL.
 ### Adversarial robustness
 
 `scripts/adversarial_eval.py` measures how well the model resists common
-evasion tricks — homoglyphs, hex encoding, and token padding. Against the
-retrained 33-feature model (full ~235k-URL dataset), evasion succeeds in
-**<1%** of adversarial samples while clean F1 stays at **0.9965**. Token-padding
-false positives are conservative-by-design: a suspicious keyword in the path
-flags the URL.
+evasion tricks — leet substitutions, hex/double-encoding, fullwidth unicode
+homoglyphs, backslash-scheme tricks, `www-` sandwich typosquats, suspicious
+token padding, and benign subdomain prefixes. Against the retrained
+33-feature model (full 468,783-URL dataset), evasion succeeds in **<1%** of
+adversarial samples while clean F1 stays at **0.9972**. Host-shape
+perturbations (token padding, backslash tricks) produce conservative
+false positives by design: an abnormal host or suspicious keyword in the
+path flags the URL. Risk thresholds (`decision_threshold`,
+`high_risk_threshold`, `low_risk_threshold`) are configurable via
+`Settings` / `.env`.
 
 ---
 
