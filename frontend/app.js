@@ -234,13 +234,18 @@ function setMatrix(on) {
 }
 
 triggerMatrixBtn.addEventListener('click', () => {
-  setMatrix(true);
-  beep(700, 0.08);
+  const turningOn = !matrixActive;
+  setMatrix(turningOn);
+  triggerMatrixBtn.classList.toggle('controls-btn--active', turningOn);
+  beep(turningOn ? 700 : 400, 0.08);
 });
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
-    if (matrixActive) setMatrix(false);
+    if (matrixActive) {
+      setMatrix(false);
+      triggerMatrixBtn.classList.remove('controls-btn--active');
+    }
     return;
   }
   const tag = e.target && e.target.tagName;
@@ -249,9 +254,12 @@ document.addEventListener('keydown', (e) => {
   if (key === 'c') toggleCrtBtn.click();
   else if (key === 's') toggleSfxBtn.click();
   else if (key === 'm') {
-    if (matrixActive) setMatrix(false);
-    else {
+    if (matrixActive) {
+      setMatrix(false);
+      triggerMatrixBtn.classList.remove('controls-btn--active');
+    } else {
       setMatrix(true);
+      triggerMatrixBtn.classList.add('controls-btn--active');
       beep(700, 0.08);
     }
   } else if (key === 't') {
