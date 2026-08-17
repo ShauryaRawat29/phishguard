@@ -1,28 +1,38 @@
 /* ==========================================================================
-   PhishGuard — Refined Dark Product Theme
-   Single accent (cyan), Space Grotesk display type, fine grid texture.
+   PhishGuard — BaseDash-inspired Theme
+   Warm near-black surfaces, warm-cream text, orange primary accent with
+   cyan secondary, hairline borders, mono HUD microcopy, superellipse corners.
    ========================================================================== */
 
 :root {
-  /* Color Palette */
-  --bg-primary: #0b0e14;
-  --bg-secondary: #12161f;
-  --bg-card: #171c26;
-  --bg-card-hover: #1d2430;
+  /* Color Palette — warm neutrals (BaseDash dark mode) */
+  --bg-primary: #0a0908;
+  --bg-secondary: #141210;
+  --bg-card: #1a1714;
+  --bg-card-hover: #221e1a;
 
-  --border-color: rgba(255, 255, 255, 0.07);
-  --border-strong: rgba(255, 255, 255, 0.14);
-  --border-focus: #22d3ee;
+  --border-color: rgba(255, 252, 248, 0.1);
+  --border-strong: rgba(255, 252, 248, 0.18);
+  --border-focus: #f49556;
 
-  --text-primary: #f6f8fb;
-  --text-secondary: #9aa7b8;
-  --text-muted: #6b7686;
+  --text-primary: #fffcf8;
+  --text-secondary: rgba(255, 252, 248, 0.7);
+  --text-muted: rgba(255, 252, 248, 0.5);
+
+  /* Accents — orange primary, cyan secondary (BaseDash) */
+  --accent-orange: #e8792f;
+  --accent-orange-light: #fdba74;
+  --accent-orange-text: #f49556;
+  --accent-orange-line: rgba(232, 121, 47, 0.35);
+  --accent-orange-wash: rgba(232, 121, 47, 0.08);
+  --accent-glow: 0 0 12px rgba(232, 121, 47, 0.45);
 
   --accent-cyan: #22d3ee;
-  --accent-blue: #3b82f6;
-  --accent-purple: #a855f7;
+  --accent-cyan-light: #67e8f9;
+  --accent-cyan-line: rgba(34, 211, 238, 0.3);
+  --accent-cyan-wash: rgba(34, 211, 238, 0.07);
 
-  /* Risk Colors */
+  /* Risk Colors (semantic — unchanged) */
   --color-legit: #22c55e;
   --color-legit-bg: rgba(34, 197, 94, 0.1);
   --color-legit-border: rgba(34, 197, 94, 0.28);
@@ -35,18 +45,18 @@
   --color-warn-bg: rgba(245, 158, 11, 0.1);
 
   /* Fonts */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-display: 'Space Grotesk', var(--font-sans);
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
-  /* Layout */
-  --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
+  /* Layout — compact BaseDash-style radii */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
   --radius-full: 9999px;
 
-  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 12px 32px -12px rgba(0, 0, 0, 0.6);
-  --shadow-lift: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 20px 40px -16px rgba(0, 0, 0, 0.7);
+  --shadow-card: 0 0 0 1px rgba(255, 252, 248, 0.06) inset, 0 30px 90px -30px rgba(0, 0, 0, 0.8);
+  --shadow-lift: 0 0 0 1px rgba(255, 252, 248, 0.06) inset, 0 20px 45px -25px rgba(0, 0, 0, 0.75);
 }
 
 /* Reset & Base */
@@ -57,7 +67,7 @@
 }
 
 ::selection {
-  background-color: rgba(34, 211, 238, 0.28);
+  background-color: rgba(232, 121, 47, 0.3);
   color: var(--text-primary);
 }
 
@@ -65,11 +75,8 @@ body {
   font-family: var(--font-sans);
   background-color: var(--bg-primary);
   background-image:
-    radial-gradient(55rem 34rem at 88% -12%, rgba(34, 211, 238, 0.08), transparent 60%),
-    radial-gradient(48rem 30rem at -12% 18%, rgba(59, 130, 246, 0.06), transparent 60%),
-    linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
-  background-size: auto, auto, 44px 44px, 44px 44px;
+    radial-gradient(55rem 34rem at 85% -15%, rgba(232, 121, 47, 0.1), transparent 55%),
+    radial-gradient(48rem 30rem at -10% 30%, rgba(34, 211, 238, 0.06), transparent 55%);
   background-attachment: fixed;
   color: var(--text-primary);
   line-height: 1.6;
@@ -117,7 +124,7 @@ body {
   top: 0;
   z-index: 100;
   padding: 0.75rem 1.25rem;
-  background: var(--accent-cyan);
+  background: var(--accent-orange);
   color: var(--bg-primary);
   font-weight: 600;
   text-decoration: none;
@@ -138,11 +145,25 @@ body {
   }
 }
 
+/* BaseDash-style superellipse corners (progressive enhancement) */
+@supports (corner-shape: superellipse(1.5)) {
+  .analyzer-card,
+  .step-card,
+  .input-group,
+  .verdict-banner,
+  .explanation-item,
+  .feature-cell,
+  .history-item,
+  .step-icon {
+    corner-shape: superellipse(1.5);
+  }
+}
+
 /* Header */
 .site-header {
   border-bottom: 1px solid var(--border-color);
-  background-color: rgba(11, 14, 20, 0.72);
-  backdrop-filter: blur(10px);
+  background-color: rgba(10, 9, 8, 0.85);
+  backdrop-filter: blur(8px);
   position: sticky;
   top: 0;
   z-index: 50;
@@ -198,7 +219,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  background-color: rgba(255, 255, 255, 0.04);
+  background-color: rgba(255, 252, 248, 0.04);
   padding: 0.38rem 0.8rem;
   border-radius: var(--radius-full);
   border: 1px solid var(--border-color);
@@ -207,7 +228,7 @@ body {
 
 .nav-link--github:hover {
   border-color: var(--border-strong);
-  background-color: rgba(255, 255, 255, 0.07);
+  background-color: rgba(255, 252, 248, 0.07);
 }
 
 .icon-github {
@@ -230,20 +251,22 @@ body {
   margin-bottom: 3rem;
 }
 
+/* Mono HUD microcopy — BaseDash signature */
 .hero-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.55rem;
   padding: 0.32rem 0.85rem;
   border-radius: var(--radius-full);
-  background-color: rgba(34, 211, 238, 0.06);
-  border: 1px solid rgba(34, 211, 238, 0.18);
-  color: var(--accent-cyan);
+  background-color: var(--accent-orange-wash);
+  border: 1px solid var(--accent-orange-line);
+  color: var(--accent-orange-light);
   font-family: var(--font-mono);
-  font-size: 0.71875rem;
+  font-size: 0.6875rem;
   font-weight: 500;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
+  text-shadow: var(--accent-glow);
   margin-bottom: 1.5rem;
 }
 
@@ -251,8 +274,8 @@ body {
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background-color: var(--accent-cyan);
-  box-shadow: 0 0 8px var(--accent-cyan);
+  background-color: var(--accent-orange);
+  box-shadow: 0 0 8px var(--accent-orange);
 }
 
 .hero-title {
@@ -265,7 +288,7 @@ body {
 }
 
 .accent-text {
-  color: var(--accent-cyan);
+  color: var(--accent-orange-text);
 }
 
 .hero-subtitle {
@@ -305,8 +328,8 @@ body {
 }
 
 .input-group:focus-within {
-  border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.14);
+  border-color: var(--accent-orange-text);
+  box-shadow: 0 0 0 3px rgba(232, 121, 47, 0.14);
 }
 
 .input-icon {
@@ -340,7 +363,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: linear-gradient(135deg, var(--accent-cyan) 0%, var(--accent-blue) 100%);
+  background: linear-gradient(135deg, var(--accent-orange) 0%, var(--accent-orange-text) 100%);
   color: #fff;
   border: none;
   padding: 0.7rem 1.4rem;
@@ -354,7 +377,7 @@ body {
 
 .analyze-btn:hover {
   opacity: 0.94;
-  box-shadow: 0 8px 20px -8px rgba(34, 211, 238, 0.5);
+  box-shadow: 0 8px 24px -8px rgba(232, 121, 47, 0.55);
 }
 
 .analyze-btn:active {
@@ -403,8 +426,8 @@ body {
 }
 
 .sample-pill:hover {
-  border-color: var(--accent-cyan);
-  color: var(--accent-cyan);
+  border-color: var(--accent-orange);
+  color: var(--accent-orange-light);
 }
 
 .sample-pill--phishing:hover {
@@ -435,14 +458,14 @@ body {
   position: absolute;
   inset: 0;
   border: 3px solid transparent;
-  border-top-color: var(--accent-cyan);
+  border-top-color: var(--accent-orange);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
 
 .spinner-ring--inner {
   inset: 8px;
-  border-top-color: var(--accent-blue);
+  border-top-color: var(--accent-cyan);
   animation-duration: 0.7s;
   animation-direction: reverse;
 }
@@ -466,7 +489,7 @@ body {
 }
 
 .loading-step.active {
-  color: var(--accent-cyan);
+  color: var(--accent-orange-text);
   font-weight: 500;
 }
 
@@ -558,8 +581,8 @@ body {
   padding: 0.35rem 0.85rem;
   border-radius: var(--radius-full);
   font-weight: 700;
-  font-size: 0.71875rem;
-  letter-spacing: 0.08em;
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
@@ -601,7 +624,7 @@ body {
   height: 100%;
   width: 0%;
   border-radius: var(--radius-full);
-  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue));
+  background: linear-gradient(90deg, var(--accent-orange-light), var(--accent-orange));
   transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s;
 }
 
@@ -674,7 +697,7 @@ body {
 .exp-bar {
   height: 4px;
   border-radius: var(--radius-full);
-  background-color: rgba(255, 255, 255, 0.08);
+  background-color: rgba(255, 252, 248, 0.08);
   margin-top: 0.4rem;
   overflow: hidden;
 }
@@ -716,7 +739,7 @@ body {
 
 .action-btn--primary:hover {
   border-color: var(--border-strong);
-  background-color: #232b3a;
+  background-color: #2a251f;
 }
 
 .action-btn--secondary {
@@ -753,8 +776,8 @@ body {
 }
 
 .show-all-btn:hover {
-  color: var(--accent-cyan);
-  border-color: var(--accent-cyan);
+  color: var(--accent-orange-text);
+  border-color: var(--accent-orange-text);
 }
 
 .show-all-chevron {
@@ -860,7 +883,7 @@ body {
 }
 
 .history-item:hover {
-  border-color: var(--border-focus);
+  border-color: var(--accent-orange-text);
 }
 
 .history-item-dot {
@@ -918,11 +941,12 @@ body {
 .section-kicker {
   text-align: center;
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 500;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
-  color: var(--accent-cyan);
+  color: var(--accent-orange-light);
+  text-shadow: var(--accent-glow);
   margin-bottom: 0.75rem;
 }
 
@@ -962,8 +986,8 @@ body {
   top: 1rem;
   right: 1.25rem;
   font-family: var(--font-mono);
-  font-size: 0.78125rem;
-  font-weight: 600;
+  font-size: 0.75rem;
+  font-weight: 500;
   color: var(--text-muted);
   opacity: 0.55;
   letter-spacing: 0.05em;
@@ -976,9 +1000,9 @@ body {
   width: 44px;
   height: 44px;
   border-radius: var(--radius-md);
-  background-color: rgba(34, 211, 238, 0.07);
-  border: 1px solid rgba(34, 211, 238, 0.16);
-  color: var(--accent-cyan);
+  background-color: var(--accent-orange-wash);
+  border: 1px solid var(--accent-orange-line);
+  color: var(--accent-orange-light);
   margin-bottom: 1.1rem;
 }
 
@@ -1017,7 +1041,7 @@ body {
 }
 
 .site-footer a:hover {
-  color: var(--accent-cyan);
+  color: var(--accent-orange-text);
 }
 
 /* Responsive */
