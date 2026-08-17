@@ -59,6 +59,13 @@ sessions — read it first when picking up a new session.
   (build + health smoke test); Dependabot config for pip + GitHub Actions;
   `SECURITY.md` with a private vulnerability-reporting process; README
   security notes updated.
+- **Phase 11 ✅** — frontend & DX: `frontend/logic.js` pure-helper module
+  (normalizeUrl, escapeHtml, buildVerdictSummary, buildCopyText, history)
+  unit-tested with **vitest** (13 tests) and linted with **eslint**;
+  app.js converted to an ES module; UX fixes (skip-to-content link, timed
+  loading-step progression, copy-result includes top factors); client-side
+  validation now mirrors the http/https-only backend rule. `logic.js` added
+  to the docs mirror; `node_modules/` gitignored.
 
 ---
 
@@ -118,15 +125,15 @@ sessions — read it first when picking up a new session.
 
 ## Phase 11 — Frontend & DX (dev-only JS tooling)
 
-- [ ] 11.1 Add vitest + eslint (dev-only; `frontend/` stays plain static files;
+- [x] 11.1 Add vitest + eslint (dev-only; `frontend/` stays plain static files;
       docs sync unchanged).
-- [ ] 11.2 Unit-test `app.js`: extract pure functions (buildVerdictSummary,
+- [x] 11.2 Unit-test `app.js`: extract pure functions (buildVerdictSummary,
       escapeHtml, history) to make them testable.
-- [ ] 11.3 UX fixes: skip-to-content link, real loading-step progression,
+- [x] 11.3 UX fixes: skip-to-content link, real loading-step progression,
       copy-result includes explanation.
-- [ ] 11.4 Client/server validation parity: mirror http/https-only rule in
+- [x] 11.4 Client/server validation parity: mirror http/https-only rule in
       `app.js`.
-- [ ] 11.5 Sync docs mirror + commit.
+- [x] 11.5 Sync docs mirror + commit.
 
 ---
 

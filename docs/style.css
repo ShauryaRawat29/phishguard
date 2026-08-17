@@ -74,6 +74,24 @@ body {
   border-radius: var(--radius-sm);
 }
 
+/* Skip-to-content link: visually hidden until focused by a keyboard user */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  padding: 0.75rem 1.25rem;
+  background: var(--accent-cyan);
+  color: var(--bg-primary);
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 0 0 var(--radius-sm) 0;
+}
+
+.skip-link:focus {
+  left: 0;
+}
+
 /* Respect users who prefer reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -396,6 +414,14 @@ body {
 .loading-step.active {
   color: var(--accent-cyan);
   font-weight: 500;
+}
+
+.loading-step.done {
+  color: var(--color-legit);
+}
+
+.loading-step.done::after {
+  content: ' \2713';
 }
 
 /* Verdict Banner */

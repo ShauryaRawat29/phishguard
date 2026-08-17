@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parent.parent
 FRONTEND = ROOT / "frontend"
 DOCS = ROOT / "docs"
 
-FILES = ["index.html", "style.css", "app.js", "favicon.svg"]
+FILES = ["index.html", "style.css", "app.js", "logic.js", "favicon.svg"]
 
 
 def sync() -> None:

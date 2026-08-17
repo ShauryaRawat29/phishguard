@@ -61,7 +61,7 @@ phishguard/
 │   ├── rate_limit.py    # slowapi limiter + per-route limits
 │   ├── routes/          # API endpoints
 │   └── services/        # validator, predictor
-├── frontend/            # Static web interface
+├── frontend/            # Static web interface (+ dev-only vitest/eslint tooling)
 ├── data/                # Dataset (gitignored, see data/README.md to download)
 ├── docs/                # Mirror of frontend/ for GitHub Pages (keep in sync)
 ├── scripts/             # sync_docs.py, rebuild_model.py
@@ -126,6 +126,12 @@ pytest                       # run tests
 ruff check .                 # lint
 ruff format --check .        # format check
 python scripts/sync_docs.py  # keep docs/ mirror in sync with frontend/
+
+# Frontend dev tooling (dev-only; frontend/ stays plain static files)
+cd frontend
+npm install                  # once — installs vitest + eslint
+npm test                     # vitest unit tests for frontend/logic.js
+npm run lint                 # eslint on frontend JS
 ```
 
 CI runs lint, format, tests (with coverage), and verifies the `docs/` mirror on

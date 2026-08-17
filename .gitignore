@@ -66,6 +66,11 @@ desktop.ini
 htmlcov/
 .tox/
 
+# ─── JS dev tooling (frontend/) ───────────────────────────
+node_modules/
+coverage/
+*.tsbuildinfo
+
 # ─── Logs ─────────────────────────────────────────────────
 *.log
 logs/

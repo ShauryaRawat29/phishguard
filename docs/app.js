@@ -2,6 +2,14 @@
    PhishGuard — Frontend Application Logic
    ========================================================================== */
 
+import {
+  buildCopyText,
+  buildVerdictSummary,
+  escapeHtml,
+  normalizeUrl,
+  prependHistoryEntry,
+} from './logic.js';
+
 // Base API URL.
 //   - Local dev: use the local FastAPI server.
 //   - Anywhere else (Render UI, GitHub Pages mirror, custom domain): use the
@@ -47,10 +55,18 @@ const analyzeAnotherBtn = document.getElementById('analyze-another-btn');
 const copyResultBtn = document.getElementById('copy-result-btn');
 const retryBtn = document.getElementById('retry-btn');
 
+const loadingSteps = [
+  document.getElementById('step-1'),
+  document.getElementById('step-2'),
+  document.getElementById('step-3'),
+];
+
 let currentAnalysisResult = null;
 let featureLabels = null;
+let loadingStepTimer = null;
 const HISTORY_KEY = 'phishguard.history';
 const HISTORY_MAX = 8;
+const LOADING_STEP_INTERVAL_MS = 1200;
 
 // Event Listeners
 form.addEventListener('submit', handleSubmit);
@@ -78,20 +94,14 @@ function useSample(url) {
 // Form Submission Handler
 async function handleSubmit(e) {
   e.preventDefault();
-  const url = input.value.trim();
 
-  // Basic client-side validation
-  if (!url) {
-    showInputError('Please enter a URL to analyze.');
+  // Client-side validation mirrors backend/services/validator.py.
+  const { url: formattedUrl, error } = normalizeUrl(input.value);
+  if (error) {
+    showInputError(error);
     return;
   }
-
-  // Auto-prepend scheme if omitted
-  let formattedUrl = url;
-  if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://') && !formattedUrl.startsWith('ftp://')) {
-    formattedUrl = 'https://' + formattedUrl;
-    input.value = formattedUrl;
-  }
+  input.value = formattedUrl;
 
   hideInputError();
   showLoading();
@@ -100,7 +110,7 @@ async function handleSubmit(e) {
     const response = await fetch(`${API_BASE_URL}/api/analyze`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url }),
+      body: JSON.stringify({ url: formattedUrl }),
     });
 
     const data = await response.json();
@@ -113,7 +123,7 @@ async function handleSubmit(e) {
 
     currentAnalysisResult = data;
     renderResult(data);
-  } catch (err) {
+  } catch {
     showError('Could not connect to the PhishGuard analysis service. Ensure backend is running.');
   }
 }
@@ -185,36 +195,48 @@ function renderResult(data) {
   resultState.hidden = false;
 }
 
-// Build a plain-language summary sentence from the prediction + top factors.
-function buildVerdictSummary(data) {
-  const isPhishing = data.prediction === 'PHISHING';
-  const pct = Math.round(data.confidence * 100);
-  const items = (data.explanation || []).slice(0, 3);
-  const labels = items.map(i => i.label.toLowerCase()).filter(Boolean);
-
-  if (isPhishing) {
-    const parts = labels.length
-      ? [` It shows signs of ${labels.join(', ')}.`]
-      : [];
-    return `This URL appears to be <strong class="phishing">phishing</strong> ` +
-      `(high probability: ${pct}%).${parts.join('')} Avoid entering any personal information.`;
-  }
-  return `This URL appears <strong class="legitimate">legitimate</strong> ` +
-    `(${pct}% confidence). It shows no strong phishing indicators.`;
+// UI State Toggles
+function setLoadingStep(index) {
+  loadingSteps.forEach((el, i) => {
+    if (!el) return;
+    el.classList.toggle('active', i === index);
+    el.classList.toggle('done', i < index);
+  });
 }
 
-// UI State Toggles
+function startLoadingSteps() {
+  setLoadingStep(0);
+  clearInterval(loadingStepTimer);
+  let current = 0;
+  loadingStepTimer = setInterval(() => {
+    current += 1;
+    if (current < loadingSteps.length) {
+      setLoadingStep(current);
+    } else {
+      clearInterval(loadingStepTimer);
+    }
+  }, LOADING_STEP_INTERVAL_MS);
+}
+
+function stopLoadingSteps() {
+  clearInterval(loadingStepTimer);
+  loadingStepTimer = null;
+  setLoadingStep(0);
+}
+
 function showLoading() {
   submitBtn.disabled = true;
   resultDivider.hidden = false;
   loadingState.hidden = false;
   resultState.hidden = true;
   errorState.hidden = true;
+  startLoadingSteps();
 }
 
 function hideLoading() {
   submitBtn.disabled = false;
   loadingState.hidden = true;
+  stopLoadingSteps();
 }
 
 function showError(msg) {
@@ -247,7 +269,7 @@ function hideInputError() {
 
 function copyResult() {
   if (!currentAnalysisResult) return;
-  const text = `PhishGuard Analysis:\nURL: ${currentAnalysisResult.url}\nVerdict: ${currentAnalysisResult.prediction} (${currentAnalysisResult.confidence * 100}% confidence)\nRisk Level: ${currentAnalysisResult.risk_level}`;
+  const text = buildCopyText(currentAnalysisResult);
   navigator.clipboard.writeText(text).then(() => {
     const originalText = copyResultBtn.innerHTML;
     copyResultBtn.innerHTML = '✓ Copied!';
@@ -266,7 +288,7 @@ async function toggleAllFeatures() {
           const meta = await resp.json();
           featureLabels = meta.feature_labels || {};
         }
-      } catch (err) {
+      } catch {
         featureLabels = {};
       }
     }
@@ -297,21 +319,21 @@ function renderAllFeatures(features) {
 function loadHistory() {
   try {
     return JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
-  } catch (err) {
+  } catch {
     return [];
   }
 }
 
 function saveToHistory(data) {
   const history = loadHistory();
-  history.unshift({
+  const entry = {
     url: data.url,
     prediction: data.prediction,
     risk_level: data.risk_level,
     confidence: data.confidence,
     timestamp: data.timestamp || new Date().toISOString(),
-  });
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, HISTORY_MAX)));
+  };
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(prependHistoryEntry(history, entry, HISTORY_MAX)));
   renderHistory();
 }
 
@@ -319,7 +341,7 @@ function renderHistory() {
   const history = loadHistory();
   historySection.hidden = history.length === 0;
   historyList.innerHTML = '';
-  history.forEach((entry, index) => {
+  history.forEach((entry) => {
     const li = document.createElement('li');
     li.className = 'history-item';
     li.tabIndex = 0;
@@ -350,10 +372,4 @@ function reanalyzeFromHistory(entry) {
 function clearHistory() {
   localStorage.removeItem(HISTORY_KEY);
   renderHistory();
-}
-
-function escapeHtml(str) {
-  return str.replace(/[&<>"']/g, match => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-  }[match]));
 }
