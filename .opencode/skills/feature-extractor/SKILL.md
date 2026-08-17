@@ -54,7 +54,8 @@ are NOT spoofed.
   Kaggle CLI if missing, then runs `ml/train.py`).
 - After changing feature behavior, retrain: `python scripts/rebuild_model.py
   --force`.
-- Training samples to 50k URLs if the dataset is larger; label semantics in
+- Training uses the **full dataset** (~235k URLs) by default; pass `--samples
+  N` to `ml/train.py` to cap it (e.g. for quick iteration). Label semantics in
   the raw CSV are `0 = phishing, 1 = legitimate` (train.py converts internally
   to `y=1` = phishing).
 - Model artifacts (`models/phishing_model.joblib`, `feature_names.json`,

@@ -1,37 +1,37 @@
 {
   "model_type": "XGBoost",
-  "training_date": "2026-08-17 01:09:33",
+  "training_date": "2026-08-17 06:52:43",
   "test_metrics": {
-    "accuracy": 0.9973,
-    "precision": 0.9997,
-    "recall": 0.9941,
-    "f1_score": 0.9969,
-    "roc_auc": 0.9992
+    "accuracy": 0.997,
+    "precision": 0.9993,
+    "recall": 0.9936,
+    "f1_score": 0.9965,
+    "roc_auc": 0.9986
   },
   "all_model_comparison": {
     "Logistic Regression": {
-      "Accuracy": 0.9937,
-      "Precision": 0.9981,
-      "Recall": 0.9872,
-      "F1-Score": 0.9926,
-      "ROC-AUC": 0.9984,
-      "Train_Time_s": 0.93
+      "Accuracy": 0.9943,
+      "Precision": 0.9989,
+      "Recall": 0.9877,
+      "F1-Score": 0.9933,
+      "ROC-AUC": 0.9981,
+      "Train_Time_s": 1.04
     },
     "Random Forest": {
-      "Accuracy": 0.9956,
-      "Precision": 0.9984,
-      "Recall": 0.9913,
-      "F1-Score": 0.9948,
-      "ROC-AUC": 0.9982,
-      "Train_Time_s": 0.47
+      "Accuracy": 0.9966,
+      "Precision": 0.9997,
+      "Recall": 0.9922,
+      "F1-Score": 0.996,
+      "ROC-AUC": 0.9985,
+      "Train_Time_s": 1.43
     },
     "XGBoost": {
-      "Accuracy": 0.996,
-      "Precision": 0.9987,
-      "Recall": 0.9919,
-      "F1-Score": 0.9953,
-      "ROC-AUC": 0.9983,
-      "Train_Time_s": 0.26
+      "Accuracy": 0.9971,
+      "Precision": 0.9996,
+      "Recall": 0.9937,
+      "F1-Score": 0.9967,
+      "ROC-AUC": 0.9986,
+      "Train_Time_s": 0.65
     }
   }
 }

@@ -25,11 +25,15 @@ sessions — read it first when picking up a new session.
   `feature_extractor.py:543` homograph gap and `is_trusted_proxy` edge cases;
   README updated (live links, security headers, docs gating, adversarial
   robustness).
-- **NOTE — next session:** consider **increasing the training dataset size**.
-  `ml/train.py` currently samples **50,000** of **235,795** URLs (feature
-  extraction ≈56s per 50k → ~4.5 min for the full set). Raising the cap or
-  using the full dataset may further improve the already-high F1. After any
-  retrain: recommit model artifacts and re-run `scripts/adversarial_eval.py`.
+- **Phase 5 ✅** — retrained on the **full 235,795-URL dataset**
+  (was 50k sample). `ml/train.py` now takes an optional `--samples` flag and
+  defaults to all data. Test F1 **0.9965** on a 35k held-out test set
+  (accuracy 0.9970, AUC 0.9986), XGBoost still the winner; adversarial evasion
+  still **<1%** for all perturbations. Model artifacts recommitted.
+- **NOTE — next session:** the model is at the performance ceiling for this
+  feature set. Further gains would need new signals (e.g. more brands,
+  certificate/phishing-feed lookups — subject to the no-SSRF invariant), more
+  data from other sources, or hyperparameter tuning.
 
 ---
 

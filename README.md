@@ -210,9 +210,10 @@ point the GitHub Pages `CORS_ORIGINS` at your Pages URL.
 
 `scripts/adversarial_eval.py` measures how well the model resists common
 evasion tricks — homoglyphs, hex encoding, and token padding. Against the
-retrained 33-feature model, evasion succeeds in **<1%** of adversarial samples
-while clean F1 stays at **0.9969**. Token-padding false positives are
-conservative-by-design: a suspicious keyword in the path flags the URL.
+retrained 33-feature model (full ~235k-URL dataset), evasion succeeds in
+**<1%** of adversarial samples while clean F1 stays at **0.9965**. Token-padding
+false positives are conservative-by-design: a suspicious keyword in the path
+flags the URL.
 
 ---
 

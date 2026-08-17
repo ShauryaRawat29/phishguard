@@ -14,6 +14,7 @@ Usage:
     python ml/train.py
 """
 
+import argparse
 import json
 import os
 import sys
@@ -38,6 +39,15 @@ def main():
     print("[PhishGuard] Model Training & Pipeline Execution")
     print("=" * 60)
 
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--samples",
+        type=int,
+        default=None,
+        help="Max URLs to train on (default: use the full dataset)",
+    )
+    args = parser.parse_args()
+
     data_path = os.path.join("data", "phishing_urls.csv")
     if not os.path.exists(data_path):
         print(f"Error: Dataset not found at '{data_path}'. Please download it first.")
@@ -51,10 +61,11 @@ def main():
     url_col = "URL" if "URL" in df.columns else df.columns[0]
     label_col = "label" if "label" in df.columns else df.columns[-1]
 
-    # Sample if dataset is very large for fast training iteration (e.g. 50,000 URLs)
-    if len(df) > 50000:
-        print("   Sampling 50,000 URLs for efficient training iteration...")
-        df = df.sample(n=50000, random_state=42).reset_index(drop=True)
+    # Optionally cap the number of URLs used for training. With no cap, the
+    # full dataset (~235k URLs) is used for maximum model quality.
+    if args.samples is not None and len(df) > args.samples:
+        print(f"   Sampling {args.samples} URLs (--samples flag)...")
+        df = df.sample(n=args.samples, random_state=42).reset_index(drop=True)
 
     print(f"Extracting 33 features for {len(df)} URLs using FeatureExtractor...")
     extractor = FeatureExtractor()

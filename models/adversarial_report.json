@@ -4,14 +4,14 @@
     "legit_fp_rate": 0.0
   },
   "leet_sld": {
-    "phishing_f1": 0.9982,
-    "evasion_rate": 0.0035,
-    "legit_fp_rate": 0.0472
+    "phishing_f1": 0.9977,
+    "evasion_rate": 0.0047,
+    "legit_fp_rate": 0.0114
   },
   "hex_encoded_sld": {
     "phishing_f1": 0.9971,
     "evasion_rate": 0.0058,
-    "legit_fp_rate": 0.0262
+    "legit_fp_rate": 0.0516
   },
   "suspicious_token_padding": {
     "phishing_f1": 1.0,
@@ -21,6 +21,6 @@
   "benign_subdomain_prefix": {
     "phishing_f1": 0.9953,
     "evasion_rate": 0.0093,
-    "legit_fp_rate": 0.0061
+    "legit_fp_rate": 0.0087
   }
 }
