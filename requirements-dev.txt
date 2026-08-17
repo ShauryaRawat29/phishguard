@@ -3,7 +3,7 @@
 # (Install requirements.txt first)
 
 # ─── Testing ──────────────────────────────────────────────
-pytest==8.4.1
+pytest==9.1.1
 pytest-asyncio==1.0.0
 pytest-cov==5.0.0
 httpx==0.28.1
