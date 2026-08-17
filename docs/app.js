@@ -93,7 +93,7 @@ function applyTheme(id) {
 }
 
 function initTheme() {
-  const saved = localStorage.getItem(THEME_KEY) || 'green';
+  const saved = localStorage.getItem(THEME_KEY) || 'arcade';
   applyTheme(saved);
   themeSelect.value = saved;
 }

@@ -1,11 +1,44 @@
 /* ==========================================================================
-   PhishGuard — Retro CRT Theme (Single Page)
-   Inspired by nivinvysakh/astro-tui-portfolio: monospace phosphor terminal,
-   CRT scanlines, flicker, themeable via CSS variables (data-theme on <html>).
+   PhishGuard — Neon Arcade CRT Theme (Single Page)
+   Inspired by nivinvysakh/astro-tui-portfolio: arcade pixel headings with
+   Press Start 2P, terminal body with VT323, CRT scanlines, flicker,
+   themeable via CSS variables (data-theme on <html>).
    ========================================================================== */
 
-/* ── Theme tokens: Phosphor Green (default) ──────────────────────────────── */
+/* ── Theme tokens: Neon Arcade (default) ────────────────────────────────── */
 :root,
+[data-theme="arcade"] {
+  --bg-main: #0b0616;
+  --bg-card: #160b2e;
+  --bg-card-hover: #1f1140;
+  --fg-main: #e0f7ff;
+  --fg-dim: #9a8ec9;
+  --fg-bright: #ffffff;
+  --accent: #ff2d78;
+  --accent-secondary: #00e5ff;
+  --border-color: #3b2a6b;
+  --border-active: #ff2d78;
+  --glow-color: rgba(255, 45, 120, 0.25);
+  --selection-bg: #ff2d78;
+  --selection-fg: #ffffff;
+  --scanline-opacity: 0.15;
+  --vignette-opacity: 0.65;
+
+  --neon-pink: #ff2d78;
+  --neon-cyan: #00e5ff;
+  --neon-yellow: #ffe600;
+  --neon-purple: #b967ff;
+  --neon-mint: #2affc0;
+
+  --color-phish: #ff4466;
+  --color-phish-dim: #ff3355;
+  --color-phish-bg: rgba(255, 68, 102, 0.12);
+  --color-warn: #f5a623;
+  --color-legit: #22c55e;
+  --color-legit-bg: rgba(34, 197, 94, 0.12);
+}
+
+/* ── Phosphor Green ─────────────────────────────────────────────────────── */
 [data-theme="green"] {
   --bg-main: #0a120b;
   --bg-card: #0d1a0e;
@@ -82,7 +115,7 @@
   --selection-fg: #bd93f9;
 }
 
-/* ── Retro Monochrome ───────────────────────────────────────────────────── */
+/* ── Paper Terminal ──────────────────────────────────────────────────────── */
 [data-theme="mono"] {
   --bg-main: #0f0f0f;
   --bg-card: #191919;
@@ -117,7 +150,7 @@ html {
 }
 
 body {
-  font-family: 'JetBrains Mono', 'Share Tech Mono', ui-monospace, monospace;
+  font-family: 'VT323', 'Share Tech Mono', ui-monospace, monospace;
   background-color: var(--bg-main);
   background-image:
     radial-gradient(60rem 34rem at 50% -10%, var(--glow-color), transparent 60%),
@@ -268,10 +301,10 @@ body.crt-on .controls-bar {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-family: 'Press Start 2P', 'VT323', monospace;
+  font-size: 0.78rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
   color: var(--fg-bright);
   text-decoration: none;
 }
@@ -304,7 +337,7 @@ body.crt-on .controls-bar {
 }
 
 .theme-picker select {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'VT323', monospace;
   font-size: 0.68rem;
   background-color: var(--bg-card);
   color: var(--fg-bright);
@@ -321,7 +354,7 @@ body.crt-on .controls-bar {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'VT323', monospace;
   font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -377,35 +410,29 @@ body.crt-off .controls-btn-dot,
   margin-bottom: 3rem;
 }
 
-.ascii-logo {
-  display: inline-block;
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 0.56rem;
-  line-height: 1.15;
-  color: var(--fg-main);
-  text-shadow: 0 0 6px var(--glow-color);
-  overflow-x: auto;
-  margin-bottom: 1.2rem;
-}
-
 .hero-title {
-  font-size: 2rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
-  margin-bottom: 1rem;
+  font-family: 'Press Start 2P', 'VT323', monospace;
+  font-size: 1.5rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  line-height: 1.7;
+  margin-bottom: 1.1rem;
 }
 
 .hero-title-main {
   color: var(--fg-bright);
+  text-shadow: 0 0 12px var(--neon-pink, var(--glow-color)), 0 0 26px var(--neon-cyan, var(--glow-color));
 }
 
 .hero-title-accent {
   display: block;
-  color: var(--accent);
-  font-size: 1.05rem;
-  letter-spacing: 0.04em;
-  margin-top: 0.35rem;
+  color: var(--neon-cyan, var(--accent));
+  font-family: 'VT323', monospace;
+  font-size: 1.2rem;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  margin-top: 0.5rem;
+  text-shadow: 0 0 10px var(--neon-cyan, var(--glow-color));
 }
 
 .hero-subtitle {
@@ -431,7 +458,7 @@ body.crt-off .controls-btn-dot,
   font-size: 0.6rem;
   font-weight: 700;
   letter-spacing: 0.1em;
-  color: var(--accent);
+  color: var(--neon-cyan, var(--accent));
   border: 1px solid var(--border-color);
   padding: 0.25rem 0.55rem;
 }
@@ -486,7 +513,7 @@ body.crt-off .controls-btn-dot,
   outline: none;
   padding: 0.85rem 0.95rem;
   color: var(--fg-bright);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'VT323', monospace;
   font-size: 0.85rem;
   caret-color: var(--accent);
 }
@@ -505,10 +532,10 @@ body.crt-off .controls-btn-dot,
   border: 1px solid var(--border-active);
   margin: 5px;
   padding: 0 1.2rem;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-family: 'Press Start 2P', 'VT323', monospace;
+  font-size: 0.68rem;
+  font-weight: 400;
+  letter-spacing: 0.06em;
   cursor: pointer;
   transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -559,7 +586,7 @@ body.crt-off .controls-btn-dot,
   border: 1px solid var(--border-color);
   color: var(--fg-main);
   padding: 0.3rem 0.7rem;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'VT323', monospace;
   font-size: 0.7rem;
   cursor: pointer;
   transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
@@ -740,7 +767,7 @@ body.crt-off .controls-btn-dot,
 }
 
 .verdict-url {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'VT323', monospace;
   font-size: 0.72rem;
   color: var(--fg-dim);
   white-space: nowrap;
@@ -894,7 +921,7 @@ body.crt-off .controls-btn-dot,
   border: 1px solid var(--border-color);
   color: var(--fg-dim);
   padding: 0.4rem 0.7rem;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'VT323', monospace;
   font-size: 0.66rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -960,7 +987,7 @@ body.crt-off .controls-btn-dot,
   flex: 1;
   padding: 0.7rem;
   border: 1px solid var(--border-color);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'VT323', monospace;
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -1040,7 +1067,7 @@ body.crt-off .controls-btn-dot,
   background: transparent;
   border: none;
   color: var(--fg-dim);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'VT323', monospace;
   font-size: 0.62rem;
   letter-spacing: 0.06em;
   text-decoration: underline;
@@ -1116,16 +1143,18 @@ body.crt-off .controls-btn-dot,
   font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.22em;
-  color: var(--accent);
+  color: var(--neon-pink, var(--accent));
   margin-bottom: 0.6rem;
 }
 
 .section-title {
   text-align: center;
-  font-size: 1.7rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  margin-bottom: 0.9rem;
+  font-family: 'Press Start 2P', 'VT323', monospace;
+  font-size: 1.05rem;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  line-height: 1.6;
+  margin-bottom: 1rem;
 }
 
 .section-sub {
@@ -1155,10 +1184,11 @@ body.crt-off .controls-btn-dot,
 }
 
 .stage-num {
-  font-family: 'Share Tech Mono', monospace;
+  font-family: 'VT323', monospace;
   font-size: 1.35rem;
   font-weight: 600;
-  color: var(--accent);
+  color: var(--neon-yellow, var(--accent));
+  text-shadow: 0 0 8px var(--neon-yellow, var(--glow-color));
 }
 
 .stage-tag {
@@ -1170,10 +1200,12 @@ body.crt-off .controls-btn-dot,
 }
 
 .stage-title {
-  font-size: 1.15rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  margin-bottom: 0.55rem;
+  font-family: 'Press Start 2P', 'VT323', monospace;
+  font-size: 0.78rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  line-height: 1.6;
+  margin-bottom: 0.6rem;
 }
 
 .stage-desc {
@@ -1206,7 +1238,7 @@ body.crt-off .controls-btn-dot,
 }
 
 .stat-value {
-  font-family: 'Share Tech Mono', monospace;
+  font-family: 'VT323', monospace;
   font-size: 1.5rem;
   font-weight: 600;
   color: var(--fg-main);
@@ -1245,12 +1277,16 @@ body.crt-off .controls-btn-dot,
 .feature-icon {
   font-size: 1.4rem;
   line-height: 1;
+  color: var(--neon-purple, var(--accent));
+  filter: drop-shadow(0 0 6px var(--neon-purple, var(--glow-color)));
 }
 
 .feature-title {
-  font-size: 0.95rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  font-family: 'Press Start 2P', 'VT323', monospace;
+  font-size: 0.7rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  line-height: 1.6;
   color: var(--fg-bright);
   margin: 0.7rem 0 0.5rem;
 }
@@ -1361,14 +1397,14 @@ body.crt-off .controls-btn-dot,
 .api-block {
   padding: 1rem 1.1rem;
   overflow-x: auto;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'VT323', monospace;
   font-size: 0.72rem;
   line-height: 1.7;
   color: var(--fg-main);
 }
 
 .api-comment {
-  color: var(--fg-dim);
+  color: var(--neon-yellow, var(--fg-dim));
 }
 
 /* ── Security ───────────────────────────────────────────────────────────── */
@@ -1405,7 +1441,7 @@ body.crt-off .controls-btn-dot,
 .security-title-sm {
   font-size: 0.8rem;
   font-weight: 700;
-  color: var(--fg-bright);
+  color: var(--neon-mint, var(--fg-bright));
   display: block;
   margin-bottom: 0.3rem;
 }
@@ -1441,7 +1477,7 @@ body.crt-off .controls-btn-dot,
 }
 
 .footer-hint kbd {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'VT323', monospace;
   font-size: 0.64rem;
   color: var(--fg-bright);
   background-color: var(--bg-card);
@@ -1453,7 +1489,6 @@ body.crt-off .controls-btn-dot,
 /* ── Responsive ─────────────────────────────────────────────────────────── */
 @media (max-width: 860px) {
   .main-content { padding: 2.4rem 0.9rem 3rem; }
-  .ascii-logo { font-size: 0.42rem; }
   .features-grid { grid-template-columns: 1fr 1fr; }
   .security-grid { grid-template-columns: 1fr; }
   .stage { grid-template-columns: 1fr; gap: 0.6rem; }
@@ -1468,7 +1503,8 @@ body.crt-off .controls-btn-dot,
   .controls-bar { padding: 0.5rem 0.7rem; }
   .controls-right { justify-content: flex-end; }
   .theme-picker-label { display: none; }
-  .hero-title { font-size: 1.5rem; }
+  .hero-title { font-size: 1rem; }
+  .hero-title-accent { font-size: 1rem; }
   .features-grid { grid-template-columns: 1fr; }
   .analyzer-card { padding: 1.2rem 1rem; }
   .analyze-btn { justify-content: center; padding: 0.7rem; }

@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="green">
+<html lang="en" data-theme="arcade">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PhishGuard — AI Phishing URL Detector</title>
   <meta name="description" content="PhishGuard analyzes URLs using machine learning to detect phishing attempts and explain exactly why a URL is suspicious." />
-  <meta name="theme-color" content="#0a120b" />
+  <meta name="theme-color" content="#0b0616" />
   <meta name="color-scheme" content="dark" />
 
   <!-- Open Graph / social sharing -->
@@ -21,7 +21,7 @@
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -51,11 +51,12 @@
       <label class="theme-picker">
         <span class="theme-picker-label">THEME</span>
         <select id="theme-select" aria-label="Select color theme">
+          <option value="arcade">🌈 Neon Arcade</option>
           <option value="green">🟢 Phosphor Green</option>
           <option value="amber">🟠 Amber Monitor</option>
           <option value="cyan">🔵 Cyber Cyan</option>
           <option value="dracula">🟣 Dracula Synth</option>
-          <option value="mono">⚪ Retro Mono</option>
+          <option value="mono">⚪ Paper Terminal</option>
         </select>
       </label>
 
@@ -74,14 +75,8 @@
 
     <!-- ══ Hero Banner ═════════════════════════════════════════ -->
     <header class="hero-banner" aria-labelledby="hero-title">
-      <pre class="ascii-logo" aria-hidden="true">
-  ____  _     _     _   _   _    ____  ____  _   _    _    ____  ____   ____
- / ___|| |__ (_)___| |_| | | |  / ___||  _ \| | | |  / \  |  _ \|  _ \ / ___|
- \___ \| '_ \| / __| __| | | | | |  _ | |_) | | | | / _ \ | |_) | | | | |  _
-  ___) | | | | \__ \ |_| |_| | | |_| ||  _ <| |_| |/ ___ \|  _ <| |_| | |_| |
- |____/|_| |_|_|___/\__|\___/   \____||_| \_\\___//_/   \_\_| \_\____/ \____|</pre>
       <h1 class="hero-title" id="hero-title">
-        <span class="hero-title-main">Retro-Tech URL Scanner</span>
+        <span class="hero-title-main">PhishGuard</span>
         <span class="hero-title-accent">// Detect Phishing Before It Detects You</span>
       </h1>
       <p class="hero-subtitle">
