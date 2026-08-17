@@ -27,4 +27,4 @@ slowapi>=0.1.9
 
 # ─── Visualization (for notebooks / docs) ─────────────────
 matplotlib>=3.8.0
-seaborn>=0.13.0
+seaborn>=0.13.2
