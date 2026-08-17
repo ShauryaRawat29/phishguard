@@ -6,7 +6,7 @@
 fastapi>=0.115.0
 uvicorn[standard]>=0.30.0
 pydantic>=2.7.0
-pydantic-settings>=2.2.0
+pydantic-settings>=2.15.0
 
 # ─── ML Core ──────────────────────────────────────────────
 # Using --only-binary=:all: is recommended on Windows to avoid Fortran builds
