@@ -1,7 +1,7 @@
 /* ==========================================================================
    PhishGuard — Frontend Application Logic
-   Retro TUI terminal chrome: themes, CRT toggle, SFX, matrix rain, clock,
-   view switching, plus the URL analyzer.
+   Retro CRT single page: themes, CRT toggle, SFX, matrix rain, keyboard
+   shortcuts, plus the URL analyzer.
    ========================================================================== */
 
 import {
@@ -71,7 +71,7 @@ const loadingSteps = [
   document.getElementById('step-3'),
 ];
 
-// DOM Elements — terminal chrome
+// DOM Elements — display controls
 const themeSelect = document.getElementById('theme-select');
 const toggleCrtBtn = document.getElementById('toggle-crt-btn');
 const crtIndicator = document.getElementById('crt-indicator');
@@ -79,12 +79,6 @@ const toggleSfxBtn = document.getElementById('toggle-sfx-btn');
 const sfxIcon = document.getElementById('sfx-icon');
 const sfxStatus = document.getElementById('sfx-status');
 const triggerMatrixBtn = document.getElementById('trigger-matrix-btn');
-const tabScanner = document.getElementById('tab-scanner');
-const tabPipeline = document.getElementById('tab-pipeline');
-const viewScanner = document.getElementById('view-scanner');
-const viewPipeline = document.getElementById('view-pipeline');
-const modeStatusText = document.getElementById('mode-status-text');
-const liveClock = document.getElementById('live-clock');
 const matrixRain = document.getElementById('matrix-rain');
 
 let currentAnalysisResult = null;
@@ -183,12 +177,6 @@ toggleSfxBtn.addEventListener('click', () => {
   if (sfxEnabled) playSuccess();
 });
 
-// ── Live clock ────────────────────────────────────────────────────────────
-
-function updateClock() {
-  liveClock.textContent = `${new Date().toLocaleTimeString()} LOCAL`;
-}
-
 // ── Matrix rain ───────────────────────────────────────────────────────────
 
 let matrixActive = false;
@@ -251,25 +239,26 @@ triggerMatrixBtn.addEventListener('click', () => {
 });
 
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && matrixActive) setMatrix(false);
+  if (e.key === 'Escape') {
+    if (matrixActive) setMatrix(false);
+    return;
+  }
+  const tag = e.target && e.target.tagName;
+  if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+  const key = e.key.toLowerCase();
+  if (key === 'c') toggleCrtBtn.click();
+  else if (key === 's') toggleSfxBtn.click();
+  else if (key === 'm') {
+    if (matrixActive) setMatrix(false);
+    else {
+      setMatrix(true);
+      beep(700, 0.08);
+    }
+  } else if (key === 't') {
+    themeSelect.focus();
+    beep(500, 0.04);
+  }
 });
-
-// ── View switching (SCANNER / PIPELINE) ───────────────────────────────────
-
-function switchView(mode) {
-  const scanner = mode === 'scanner';
-  viewScanner.hidden = !scanner;
-  viewPipeline.hidden = scanner;
-  tabScanner.classList.toggle('active', scanner);
-  tabScanner.setAttribute('aria-selected', String(scanner));
-  tabPipeline.classList.toggle('active', !scanner);
-  tabPipeline.setAttribute('aria-selected', String(!scanner));
-  modeStatusText.textContent = scanner ? 'SCANNER' : 'PIPELINE';
-  if (scanner) window.setTimeout(() => input.focus(), 50);
-}
-
-tabScanner.addEventListener('click', () => switchView('scanner'));
-tabPipeline.addEventListener('click', () => switchView('pipeline'));
 
 // ── Event listeners ───────────────────────────────────────────────────────
 
@@ -291,8 +280,6 @@ renderHistory();
 initTheme();
 applyCRT();
 updateSfxUI();
-updateClock();
-window.setInterval(updateClock, 1000);
 
 // ── Sample URLs ───────────────────────────────────────────────────────────
 
