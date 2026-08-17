@@ -14,4 +14,4 @@ ipykernel==6.29.5
 
 # ─── Code Quality ─────────────────────────────────────────
 ruff==0.12.4
-pre-commit==4.2.0
+pre-commit==4.6.2
