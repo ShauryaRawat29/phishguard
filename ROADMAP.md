@@ -33,6 +33,12 @@ sessions — read it first when picking up a new session.
 - **Phase 6 ✅** — correctness sweep: IPv6 host-parsing fix, favicon sync bug,
   full-dataset retrain, stale notebook/README cleanup. Model retrained (F1
   0.9965, unchanged), adversarial evasion still <1%, 100% coverage.
+- **Phase 7 ✅** — dataset extension: `ml/augment.py` (leet/homoglyph/
+  typosquat, stdlib-only), `scripts/build_dataset.py` (PhishTank +
+  URLhaus dumps, `data/extra/`, ccTLD legit variants, dedup/standardize),
+  `--dataset` flag in `ml/train.py`. Extended to **468,783 URLs** (333,741
+  phishing / 135,042 legit). Retrained XGBoost: test F1 **0.9975** (was
+  0.9965), accuracy 0.9964, AUC 0.9994, adversarial evasion still <1%.
 
 ---
 
@@ -54,13 +60,13 @@ sessions — read it first when picking up a new session.
 
 ## Phase 7 — Dataset Extension
 
-- [ ] 7.1 Multi-source data collection: integrate PhishTank, OpenPhish, and UCI ML Repository datasets
-- [ ] 7.2 Data augmentation: implement character substitution, typosquatting, and homoglyph generation
-- [ ] 7.3 Temporal updates: add recent 2024-2026 phishing URLs to capture new patterns
-- [ ] 7.4 Geographic diversity: add international URLs and country-specific TLDs
-- [ ] 7.5 Dataset validation: deduplication, format standardization, and quality checks
-- [ ] 7.6 Retrain and evaluate: compare model performance with extended dataset
-- [ ] 7.7 Update documentation and scripts for new data sources
+- [x] 7.1 Multi-source data collection: integrate PhishTank, OpenPhish, and UCI ML Repository datasets
+- [x] 7.2 Data augmentation: implement character substitution, typosquatting, and homoglyph generation
+- [x] 7.3 Temporal updates: add recent 2024-2026 phishing URLs to capture new patterns
+- [x] 7.4 Geographic diversity: add international URLs and country-specific TLDs
+- [x] 7.5 Dataset validation: deduplication, format standardization, and quality checks
+- [x] 7.6 Retrain and evaluate: compare model performance with extended dataset
+- [x] 7.7 Update documentation and scripts for new data sources
 
 ## Phase 8 — ML Refinement (no new Python deps)
 

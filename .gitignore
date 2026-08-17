@@ -30,6 +30,7 @@ pip-delete-this-directory.txt
 
 # ─── Dataset (large files — download separately) ──────────
 data/*.csv
+data/*.txt
 data/*.zip
 data/*.gz
 data/*.parquet

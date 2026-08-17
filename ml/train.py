@@ -46,9 +46,15 @@ def main():
         default=None,
         help="Max URLs to train on (default: use the full dataset)",
     )
+    parser.add_argument(
+        "--dataset",
+        type=str,
+        default=os.path.join("data", "phishing_urls.csv"),
+        help="Path to the (url, label) training CSV (default: data/phishing_urls.csv)",
+    )
     args = parser.parse_args()
 
-    data_path = os.path.join("data", "phishing_urls.csv")
+    data_path = args.dataset
     if not os.path.exists(data_path):
         print(f"Error: Dataset not found at '{data_path}'. Please download it first.")
         sys.exit(1)
